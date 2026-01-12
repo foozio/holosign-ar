@@ -7,7 +7,8 @@ export class Webcam {
     this.videoElement.autoplay = true;
     this.videoElement.playsInline = true;
     // Hide the video element by default, we'll likely render it to a canvas or behind one
-    this.videoElement.style.display = 'none'; 
+    // this.videoElement.style.display = 'none'; 
+    this.videoElement.style.display = 'block';
     document.body.appendChild(this.videoElement);
   }
 

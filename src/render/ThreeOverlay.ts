@@ -49,8 +49,8 @@ export class ThreeOverlay {
         this.scene.add(this.handGroup);
 
         // Initialize pools
-        const sphereGeo = new THREE.SphereGeometry(0.015, 16, 16);
-        const sphereMat = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+        const sphereGeo = new THREE.SphereGeometry(0.02, 16, 16);
+        const sphereMat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red for visibility
 
         for (let i = 0; i < 21; i++) {
             const mesh = new THREE.Mesh(sphereGeo, sphereMat);
@@ -58,8 +58,8 @@ export class ThreeOverlay {
             this.handGroup.add(mesh);
         }
 
-        const cylGeo = new THREE.CylinderGeometry(0.005, 0.005, 1, 8);
-        const cylMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
+        const cylGeo = new THREE.CylinderGeometry(0.01, 0.01, 1, 8);
+        const cylMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green connections
 
         for (let i = 0; i < HAND_CONNECTIONS.length; i++) {
             const mesh = new THREE.Mesh(cylGeo, cylMat);

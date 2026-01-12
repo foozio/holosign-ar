@@ -45,11 +45,11 @@ export class App {
 
         // wrapper
         this.videoWrapper = document.createElement('div');
-        this.videoWrapper.className = 'video-wrapper';
+        this.videoWrapper.className = 'video-container';
         this.container.appendChild(this.videoWrapper);
 
         this.uiWrapper = document.createElement('div');
-        this.uiWrapper.className = 'ui-wrapper';
+        this.uiWrapper.className = 'ui-container';
         this.container.appendChild(this.uiWrapper);
 
         // Init modules
@@ -108,6 +108,7 @@ export class App {
 
             // 3. Render
             this.overlay.update(smoothedResult);
+            this.overlay.render();
         });
     }
 
