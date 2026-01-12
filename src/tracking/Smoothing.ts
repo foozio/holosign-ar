@@ -16,6 +16,11 @@ export class OneEuroFilter {
         this.dCutoff = dCutoff;
     }
 
+    setParams(minCutoff: number, beta: number) {
+        this.minCutoff = minCutoff;
+        this.beta = beta;
+    }
+
     filter(t: number, x: number): number {
         if (this.tPrev === null) {
             this.tPrev = t;
@@ -65,12 +70,11 @@ export class LandmarkSmoother {
 
     // smooths a single hand's landmarks
     // landmarks: array of {x, y, z}
-    smooth(timestamp: number, landmarks: { x: number, y: number, z: number }[]): { x: number, y: number, z: number }[] {
+    smooth(timestamp: number, landmarks: { x: number, y: number, z: number }[], confidence: number): { x: number, y: number, z: number }[] {
         if (this.filters.length !== this.numLandmarks) {
             this.filters = [];
             for (let i = 0; i < this.numLandmarks; i++) {
-                // Tunable params: minCutoff=1.0 (slow speed jitter), beta=0.0 (speed lag) -> 1.0, 0.0 is very smoothing but maybe laggy. 
-                // Defaulting to moderate smoothing.
+                // Initial params
                 this.filters.push([
                     new OneEuroFilter(1.0, 1.0), // x
                     new OneEuroFilter(1.0, 1.0), // y
@@ -79,7 +83,28 @@ export class LandmarkSmoother {
             }
         }
 
+        // Adaptive Smoothing Logic
+        // High confidence (>0.8) -> Low smoothing (Responsive) -> beta=10.0, minCutoff=1.0
+        // Low confidence (<0.5) -> High smoothing (Stable)     -> beta=0.001, minCutoff=0.1
+
+        let targetBeta = 0.001;
+        let targetCutoff = 0.1;
+
+        if (confidence > 0.8) {
+            targetBeta = 10.0;
+            targetCutoff = 1.0;
+        } else if (confidence > 0.5) {
+            // Linear interpolation or mid-tier
+            targetBeta = 1.0;
+            targetCutoff = 0.5;
+        }
+
         return landmarks.map((lm, i) => {
+            // Update params for all axes
+            this.filters[i][0].setParams(targetCutoff, targetBeta);
+            this.filters[i][1].setParams(targetCutoff, targetBeta);
+            this.filters[i][2].setParams(targetCutoff, targetBeta);
+
             return {
                 x: this.filters[i][0].filter(timestamp, lm.x),
                 y: this.filters[i][1].filter(timestamp, lm.y),

@@ -9,6 +9,7 @@ import { ThreeOverlay } from '../render/ThreeOverlay';
 import { DatasetStore } from '../capture/DatasetStore';
 import { CaptureController } from '../capture/CaptureController';
 import type { CaptureConfig } from '../capture/CaptureController';
+import { Calibrator } from '../tracking/Calibration';
 import type { SampleType, Handedness } from '../capture/DatasetTypes';
 
 export class App {
@@ -20,6 +21,7 @@ export class App {
     private smoother: LandmarkSmoother;
     private recognizer: Recognizer;
     private overlay: ThreeOverlay;
+    private calibrator: Calibrator;
 
     // UI Elements
     private captionElement!: HTMLElement;
@@ -37,6 +39,16 @@ export class App {
     private captureLabel: string = 'A';
     private captureType: SampleType = 'static';
     private captureHandedness: Handedness = 'Right';
+
+    // Tracking Config
+    private mirrorVideo: boolean = true;
+    private handednessLock: 'Auto' | 'Right' | 'Left' = 'Auto';
+
+    // Performance
+    private lastFrameTime: number = 0;
+    private frameCount: number = 0;
+    private lowFpsCount: number = 0;
+    private currentQuality: 'high' | 'low' = 'high';
 
     constructor(containerId: string) {
         const root = document.getElementById(containerId);
@@ -65,6 +77,7 @@ export class App {
         this.smoother = new LandmarkSmoother();
         this.recognizer = new Recognizer();
         this.overlay = new ThreeOverlay(this.videoWrapper);
+        this.calibrator = new Calibrator();
 
         // Setup UI
         this.setupUI();
@@ -78,13 +91,29 @@ export class App {
 
         // Tracking callback
         this.hands.setCallback((result: TrackingResult) => {
+            // Filter by Handedness Lock
+            let filteredHands = result.hands;
+            if (this.handednessLock !== 'Auto') {
+                filteredHands = filteredHands.filter(h => h.handedness === this.handednessLock);
+            }
+
             // 1. Smooth landmarks
-            const smoothedHands = result.hands.map((hand: HandResult) => {
-                const smoothedLandmarks = this.smoother.smooth(result.timestamp, hand.landmarks);
+            const smoothedHands = filteredHands.map((hand: HandResult) => {
+                const smoothedLandmarks = this.smoother.smooth(result.timestamp, hand.landmarks, hand.score);
                 return { ...hand, landmarks: smoothedLandmarks };
             });
 
             const smoothedResult = { ...result, hands: smoothedHands };
+
+            // Process Calibration
+            if (this.calibrator.isActive && smoothedHands.length > 0) {
+                this.calibrator.process(smoothedHands[0].landmarks);
+            }
+            // Update overlay with calibration data
+            const calibData = this.calibrator.calibrationData;
+            if (calibData) {
+                this.overlay.setCalibration(calibData);
+            }
 
             // 2. Process based on mode
             if (this.mode === 'interpret') {
@@ -150,6 +179,48 @@ export class App {
             this.debugPanel.style.display = this.debugMode ? 'block' : 'none';
         };
         this.uiWrapper.appendChild(debugBtn);
+
+        // Controls container
+        const controls = document.createElement('div');
+        controls.className = 'quick-controls';
+
+        // Mirror Toggle
+        const mirrorBtn = document.createElement('button');
+        mirrorBtn.innerText = '↔️';
+        mirrorBtn.title = 'Toggle Mirror';
+        mirrorBtn.onclick = () => {
+            this.mirrorVideo = !this.mirrorVideo;
+            if (this.mirrorVideo) this.webcam.videoElement.classList.remove('unmirrored');
+            else this.webcam.videoElement.classList.add('unmirrored');
+        };
+        controls.appendChild(mirrorBtn);
+
+        // Hand Lock
+        const lockSel = document.createElement('select');
+        ['Auto', 'Right', 'Left'].forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt;
+            o.text = opt;
+            lockSel.appendChild(o);
+        });
+        lockSel.onchange = (e) => this.handednessLock = (e.target as HTMLSelectElement).value as any;
+        controls.appendChild(lockSel);
+
+        this.uiWrapper.appendChild(controls);
+
+        // Calibrate Button
+        const calibBtn = document.createElement('button');
+        calibBtn.className = 'calib-btn';
+        calibBtn.innerText = '📏';
+        calibBtn.title = 'Calibrate Depth (Hold hand up for 3s)';
+        calibBtn.onclick = () => {
+            if (!this.calibrator.isActive) {
+                this.calibrator.start();
+                calibBtn.classList.add('active');
+                setTimeout(() => calibBtn.classList.remove('active'), 3000);
+            }
+        };
+        this.uiWrapper.appendChild(calibBtn);
 
         // Capture Panel (Hidden by default)
         this.createCapturePanel();
@@ -334,7 +405,37 @@ export class App {
     }
 
     private loop = () => {
+        const now = performance.now();
+        const delta = now - this.lastFrameTime;
+
+        if (delta >= 1000) {
+            const fps = this.frameCount;
+            // FPS Logic
+            if (fps < 25) {
+                this.lowFpsCount++;
+            } else {
+                this.lowFpsCount = 0;
+            }
+
+            // If consistently low FPS for 2 seconds, downgrade
+            if (this.lowFpsCount > 2 && this.currentQuality === 'high') {
+                console.log("Low FPS detected. Downgrading rendering quality.");
+                this.overlay.setQuality('low');
+                this.currentQuality = 'low';
+            }
+            // If FPS recovers (e.g. > 50), upgrade
+            else if (fps > 50 && this.currentQuality === 'low') {
+                console.log("FPS recovered. Upgrading rendering quality.");
+                this.overlay.setQuality('high');
+                this.currentQuality = 'high';
+            }
+
+            this.frameCount = 0;
+            this.lastFrameTime = now;
+        }
+
+        this.frameCount++;
         requestAnimationFrame(this.loop);
-        // Rendering is event-driven via MediaPipe callbacks
+        // Rendering is event-driven via MediaPipe callbacks, but loop monitors performance
     }
 }

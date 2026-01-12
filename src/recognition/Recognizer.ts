@@ -26,9 +26,11 @@ export class Recognizer {
     // State
     // private lastResult: RecognitionResult | null = null;
     private frameCount = 0;
-    private staticHistory: string[] = [];
+    private staticHistory: { label: string; confidence: number }[] = [];
     private readonly historySize = 5;
     private readonly debounceThreshold = 4;
+    private lastLandmarks: Landmark[] | null = null;
+    private readonly motionThreshold = 0.05; // 5% screen width/height per frame
 
     constructor() {
         this.dynamicDetector = new DynamicASLDetector();
@@ -57,6 +59,15 @@ export class Recognizer {
 
     process(timestamp: number, landmarks: Landmark[]): RecognitionResult | null {
         this.frameCount++;
+
+        // Motion Gating
+        if (this.isMoving(landmarks)) {
+            this.staticHistory = []; // Reset history on fast motion
+            this.lastLandmarks = landmarks;
+            return { label: '...', confidence: 0, type: 'static' };
+        }
+        this.lastLandmarks = landmarks;
+
         const features: HandFeaturesData = HandFeatures.extract(landmarks);
 
         if (this.useML) {
@@ -64,6 +75,23 @@ export class Recognizer {
         } else {
             return this.processRules(timestamp, features);
         }
+    }
+
+    private isMoving(current: Landmark[]): boolean {
+        if (!this.lastLandmarks) return false;
+
+        // Track key points: Wrist(0), IndexTip(8), ThumbTip(4)
+        const indices = [0, 4, 8, 12, 16, 20];
+        let totalDist = 0;
+
+        for (const idx of indices) {
+            const dx = current[idx].x - this.lastLandmarks[idx].x;
+            const dy = current[idx].y - this.lastLandmarks[idx].y;
+            totalDist += Math.sqrt(dx * dx + dy * dy);
+        }
+
+        const avgDist = totalDist / indices.length;
+        return avgDist > this.motionThreshold;
     }
 
     private processML(features: HandFeaturesData): RecognitionResult | null {
@@ -79,14 +107,14 @@ export class Recognizer {
 
         // Smoothing
         if (staticRes) {
-            this.staticHistory.push(staticRes.label);
+            this.staticHistory.push({ label: staticRes.label, confidence: staticRes.confidence });
         } else {
-            this.staticHistory.push('NONE');
+            this.staticHistory.push({ label: 'NONE', confidence: 0 });
         }
         if (this.staticHistory.length > this.historySize) this.staticHistory.shift();
 
         // Consensus
-        return this.getConsensus(staticRes?.confidence || 0);
+        return this.getConsensus();
     }
 
     private processRules(timestamp: number, features: HandFeaturesData): RecognitionResult | null {
@@ -102,34 +130,39 @@ export class Recognizer {
 
         // Smoothing
         if (staticRes) {
-            this.staticHistory.push(staticRes.label);
+            this.staticHistory.push({ label: staticRes.label, confidence: staticRes.confidence });
         } else {
-            this.staticHistory.push('NONE');
+            this.staticHistory.push({ label: 'NONE', confidence: 0 });
         }
         if (this.staticHistory.length > this.historySize) this.staticHistory.shift();
 
         // Consensus
-        // Pass confidence from single frame, or average?
-        return this.getConsensus(staticRes?.confidence || 0.8, staticRes?.debugReasons);
+        return this.getConsensus(staticRes?.debugReasons);
     }
 
-    private getConsensus(currentConf: number, debugInfo?: string[]): RecognitionResult | null {
+    private getConsensus(debugInfo?: string[]): RecognitionResult | null {
         const counts: Record<string, number> = {};
+        const confSums: Record<string, number> = {};
+
         let maxCount = 0;
         let winner = 'NONE';
 
-        for (const lbl of this.staticHistory) {
-            counts[lbl] = (counts[lbl] || 0) + 1;
-            if (counts[lbl] > maxCount) {
-                maxCount = counts[lbl];
-                winner = lbl;
+        for (const entry of this.staticHistory) {
+            const { label, confidence } = entry;
+            counts[label] = (counts[label] || 0) + 1;
+            confSums[label] = (confSums[label] || 0) + confidence;
+
+            if (counts[label] > maxCount) {
+                maxCount = counts[label];
+                winner = label;
             }
         }
 
         if (winner !== 'NONE' && maxCount >= this.debounceThreshold) {
+            const avgConf = confSums[winner] / counts[winner];
             return {
                 label: winner,
-                confidence: currentConf, // Simplified confidence
+                confidence: avgConf,
                 type: 'static',
                 debugInfo
             };

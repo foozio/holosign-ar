@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Landmark } from '@mediapipe/hands';
+import type { TrackingResult } from '../tracking/MediaPipeHands';
 import { HAND_CONNECTIONS } from '@mediapipe/hands';
 
 export class ThreeOverlay {
@@ -9,6 +9,8 @@ export class ThreeOverlay {
     private handGroup: THREE.Group;
     private spheres: THREE.Mesh[] = [];
     private cylinders: THREE.Mesh[] = [];
+    private calibratedPalmSize: number | null = null;
+    private readonly REFERENCE_DEPTH = 5.0; // Distance where calibration happens
 
     constructor(container: HTMLElement) {
         this.scene = new THREE.Scene();
@@ -37,6 +39,7 @@ export class ThreeOverlay {
 
         this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         this.renderer.setSize(container.clientWidth, container.clientHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio); // Default high quality
         this.renderer.setClearColor(0x000000, 0); // Transparent
         container.appendChild(this.renderer.domElement);
 
@@ -50,7 +53,12 @@ export class ThreeOverlay {
 
         // Initialize pools
         const sphereGeo = new THREE.SphereGeometry(0.02, 16, 16);
-        const sphereMat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red for visibility
+
+        const sphereMat = new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            transparent: true,
+            opacity: 1.0
+        });
 
         for (let i = 0; i < 21; i++) {
             const mesh = new THREE.Mesh(sphereGeo, sphereMat);
@@ -59,7 +67,12 @@ export class ThreeOverlay {
         }
 
         const cylGeo = new THREE.CylinderGeometry(0.01, 0.01, 1, 8);
-        const cylMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green connections
+
+        const cylMat = new THREE.MeshBasicMaterial({
+            color: 0x00ff00,
+            transparent: true,
+            opacity: 1.0
+        });
 
         for (let i = 0; i < HAND_CONNECTIONS.length; i++) {
             const mesh = new THREE.Mesh(cylGeo, cylMat);
@@ -80,14 +93,42 @@ export class ThreeOverlay {
         this.camera.updateProjectionMatrix();
     }
 
-    update(result: { hands: { landmarks: Landmark[] }[] }) {
+    setCalibration(size: number) {
+        this.calibratedPalmSize = size;
+    }
+
+    setQuality(quality: 'high' | 'low') {
+        if (quality === 'low') {
+            this.renderer.setPixelRatio(1);
+        } else {
+            this.renderer.setPixelRatio(window.devicePixelRatio);
+        }
+    }
+
+    update(result: TrackingResult) {
         if (result.hands.length === 0) {
             // Hide everything if no hands
             this.handGroup.visible = false;
             return;
         }
         this.handGroup.visible = true;
-        const landmarks = result.hands[0].landmarks;
+        const hand = result.hands[0];
+        const landmarks = hand.landmarks;
+        const score = hand.score || 1.0;
+
+        // Occlusion Handling (Fade Overlay)
+        // If confidence is low, hand might be occluded or exiting frame.
+        // Fade out to avoid "ghosting" or snapping.
+        let targetOpacity = 1.0;
+        if (score < 0.3) targetOpacity = 0.2;
+        else if (score < 0.6) targetOpacity = 0.5;
+
+        // Apply opacity to all children
+        this.handGroup.children.forEach((child: any) => {
+            if (child.material) {
+                child.material.opacity = targetOpacity;
+            }
+        });
 
         // Map normalized landmarks 0..1 to Screen Space world coords.
         // We need to know the visible plane at z=0.
@@ -122,16 +163,38 @@ export class ThreeOverlay {
 
         // Let's try fitting to camera basics:
         const fov = this.camera.fov * (Math.PI / 180);
-        const distance = 5; // Place hand at z=-5
+
+        let dynamicDistance = this.REFERENCE_DEPTH;
+        if (this.calibratedPalmSize) {
+            // Estimate depth based on ratio
+            // currentSize / calibratedSize = calibratedDepth / currentDepth
+            // currentDepth = calibratedDepth * (calibratedSize / currentSize)
+
+            const wrist = landmarks[0];
+            const middleMcp = landmarks[9];
+            const dx = wrist.x - middleMcp.x;
+            const dy = wrist.y - middleMcp.y;
+            const currentSize = Math.sqrt(dx * dx + dy * dy);
+
+            if (currentSize > 0) {
+                dynamicDistance = this.REFERENCE_DEPTH * (this.calibratedPalmSize / currentSize);
+            }
+        }
+
+        // Clamp distance to avoid extreme close/far
+        dynamicDistance = Math.max(1, Math.min(dynamicDistance, 10));
+
         this.camera.position.z = 0;
 
-        const heightAtDist = 2 * Math.tan(fov / 2) * distance;
+        // Recompute projection plane at this distance
+        const heightAtDist = 2 * Math.tan(fov / 2) * dynamicDistance;
         const widthAtDist = heightAtDist * this.camera.aspect;
 
         landmarks.forEach((lm, i) => {
             const x = (lm.x - 0.5) * widthAtDist;
             const y = -(lm.y - 0.5) * heightAtDist; // Flip Y
-            const z = -distance - (lm.z * 1); // Z is usually small relative value.
+            // z is relative to the hand center, which is at -dynamicDistance
+            const z = -dynamicDistance - (lm.z * 1); // Z is usually small relative value.
 
             this.spheres[i].position.set(x, y, z);
         });
