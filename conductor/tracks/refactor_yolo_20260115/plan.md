@@ -21,7 +21,7 @@
 ## Phase 3: Frontend Refactoring
 - [x] Task: Update Model Loading 68492f2
     - [ ] Refactor `src/ml/ModelLoader.ts` to support the new exported format.
-- [ ] Task: Refactor Static Recognition Logic
+- [x] Task: Refactor Static Recognition Logic 70cb740
     - [ ] Update `src/ml/StaticModelRunner.ts` to use the YOLO model output.
     - [ ] Update `Recognizer.ts` to handle the new detection/classification flow.
 - [ ] Task: Conductor - User Manual Verification 'Frontend Refactoring' (Protocol in workflow.md)
