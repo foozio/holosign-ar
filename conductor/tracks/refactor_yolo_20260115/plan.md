@@ -1,7 +1,7 @@
 # Implementation Plan - Ultralytics YOLO Integration
 
 ## Phase 1: Data & Pipeline Setup
-- [ ] Task: Configure Python Environment
+- [x] Task: Configure Python Environment 9757f5b
     - [ ] Add `ultralytics` and `roboflow` to a new `ml_pipeline/requirements.txt`.
     - [ ] Create a setup script for the ML environment.
 - [ ] Task: Create Dataset Download Script
