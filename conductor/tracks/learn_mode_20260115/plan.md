@@ -27,7 +27,7 @@
 - [x] Task: Add Reference Images 307ff31
     - [ ] Ensure `public/assets/reference/` contains images for all supported signs.
     - [ ] Integrate `ReferenceDisplay` to show the correct image for the selected sign.
-- [ ] Task: Refine Styles
+- [x] Task: Refine Styles b4394f2
     - [ ] Apply final CSS polish for the holographic/neon look.
     - [ ] Ensure responsiveness on different screen sizes.
 - [ ] Task: Conductor - User Manual Verification 'Polish & Assets' (Protocol in workflow.md)
