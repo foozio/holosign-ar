@@ -4,7 +4,7 @@
 - [x] Task: Configure Python Environment 9757f5b
     - [ ] Add `ultralytics` and `roboflow` to a new `ml_pipeline/requirements.txt`.
     - [ ] Create a setup script for the ML environment.
-- [ ] Task: Create Dataset Download Script
+- [x] Task: Create Dataset Download Script 56d55f5
     - [ ] Implement `ml_pipeline/download_dataset.py` using the Roboflow API.
     - [ ] Verify dataset structure matches Ultralytics YOLO requirements.
 - [ ] Task: Conductor - User Manual Verification 'Data & Pipeline Setup' (Protocol in workflow.md)
