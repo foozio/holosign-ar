@@ -2,12 +2,14 @@
 import { SignSelector } from './SignSelector';
 import type { RecognitionResult } from '../../recognition/Recognizer';
 import { FeedbackOverlay } from './FeedbackOverlay';
+import { ReferenceDisplay } from './ReferenceDisplay';
 
 export class LearnModeView {
     private container: HTMLElement;
     private viewElement: HTMLElement;
     private signSelector!: SignSelector; // Initialized in setupLayout
     private feedbackOverlay!: FeedbackOverlay;
+    private referenceDisplay!: ReferenceDisplay;
     private selectedSign: string | null = null;
     private statusElement!: HTMLElement;
 
@@ -39,6 +41,12 @@ export class LearnModeView {
             this.handleSignSelect(sign);
         });
 
+        // Reference Display
+        const refContainer = document.createElement('div');
+        refContainer.style.width = '100%';
+        this.viewElement.appendChild(refContainer);
+        this.referenceDisplay = new ReferenceDisplay(refContainer);
+
         // Status / Feedback area
         this.statusElement = document.createElement('div');
         this.statusElement.className = 'status-message';
@@ -46,9 +54,9 @@ export class LearnModeView {
         this.viewElement.appendChild(this.statusElement);
 
         // Placeholder for reference display (Phase 3)
-        const content = document.createElement('div');
-        content.className = 'learn-content';
-        this.viewElement.appendChild(content);
+        // const content = document.createElement('div');
+        // content.className = 'learn-content';
+        // this.viewElement.appendChild(content);
     }
 
     private handleSignSelect(sign: string) {
@@ -56,6 +64,7 @@ export class LearnModeView {
         this.statusElement.textContent = `Target: ${sign}. Waiting for gesture...`;
         this.statusElement.className = 'status-message';
         this.feedbackOverlay.setStatus('neutral');
+        this.referenceDisplay.setSign(sign);
     }
 
     public updateRecognition(result: RecognitionResult | null) {
