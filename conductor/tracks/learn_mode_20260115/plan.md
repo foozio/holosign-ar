@@ -11,7 +11,7 @@
     - [ ] Handle selection events to update the active sign state.
 - [x] Task: Conductor - User Manual Verification 'Core UI & Navigation' (Protocol in workflow.md)
 
-## Phase 2: Logic & Feedback Integration
+## Phase 2: Logic & Feedback Integration [checkpoint: 888d63e]
 - [x] Task: Connect Recognition Logic 16e6c6b
     - [ ] In `LearnModeView`, subscribe to `Recognizer` output.
     - [ ] Implement logic to compare the `Recognizer`'s predicted sign with the *selected* sign.
@@ -21,7 +21,7 @@
         - Red/Neutral border: No match.
         - Yellow/Glowing border: Partial/Low confidence match.
         - Green/Bright border + Sound/Effect: High confidence match (Success).
-- [ ] Task: Conductor - User Manual Verification 'Logic & Feedback Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Logic & Feedback Integration' (Protocol in workflow.md)
 
 ## Phase 3: Polish & Assets
 - [ ] Task: Add Reference Images
