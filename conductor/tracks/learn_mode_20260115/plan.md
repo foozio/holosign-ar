@@ -24,7 +24,7 @@
 - [x] Task: Conductor - User Manual Verification 'Logic & Feedback Integration' (Protocol in workflow.md)
 
 ## Phase 3: Polish & Assets
-- [~] Task: Add Reference Images
+- [x] Task: Add Reference Images 307ff31
     - [ ] Ensure `public/assets/reference/` contains images for all supported signs.
     - [ ] Integrate `ReferenceDisplay` to show the correct image for the selected sign.
 - [ ] Task: Refine Styles
