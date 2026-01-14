@@ -1,6 +1,6 @@
 # Implementation Plan - Learn Mode
 
-## Phase 1: Core UI & Navigation
+## Phase 1: Core UI & Navigation [checkpoint: f545d76]
 - [x] Task: Create Learn Mode Container Component d72eb46
     - [ ] Create `src/ui/LearnMode/LearnModeView.ts` (or similar structure).
     - [ ] Implement basic layout matching the Cyberpunk HUD style.
@@ -9,7 +9,7 @@
     - [ ] Create `src/ui/LearnMode/SignSelector.ts`.
     - [ ] Populate with list of supported signs (A-E, 1-3, HELLO).
     - [ ] Handle selection events to update the active sign state.
-- [ ] Task: Conductor - User Manual Verification 'Core UI & Navigation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Core UI & Navigation' (Protocol in workflow.md)
 
 ## Phase 2: Logic & Feedback Integration
 - [ ] Task: Connect Recognition Logic
