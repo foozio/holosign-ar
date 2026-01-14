@@ -15,3 +15,5 @@
 
 ## Development Tools
 - **TSConfig:** Standard TypeScript configuration for a module-based project.
+- **Vitest:** Blazing fast unit test framework powered by Vite.
+- **JSDOM:** A JavaScript implementation of various web standards, for use with Node.js.

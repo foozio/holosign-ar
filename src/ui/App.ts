@@ -11,6 +11,7 @@ import { CaptureController } from '../capture/CaptureController';
 import type { CaptureConfig } from '../capture/CaptureController';
 import { Calibrator } from '../tracking/Calibration';
 import type { SampleType, Handedness } from '../capture/DatasetTypes';
+import { LearnModeView } from './LearnMode/LearnModeView';
 
 export class App {
     private container: HTMLElement;
@@ -22,6 +23,7 @@ export class App {
     private recognizer: Recognizer;
     private overlay: ThreeOverlay;
     private calibrator: Calibrator;
+    private learnModeView: LearnModeView;
 
     // UI Elements
     private captionElement!: HTMLElement;
@@ -185,10 +187,10 @@ export class App {
         // Mode Switcher
         this.modeElement = document.createElement('div');
         this.modeElement.className = 'mode-switch';
-        ['interpret', 'capture'].forEach(m => {
+        ['interpret', 'learn', 'capture'].forEach(m => {
             const btn = document.createElement('button');
             btn.className = `mode-btn ${this.mode === m ? 'active' : ''}`;
-            btn.innerText = m.charAt(0).toUpperCase() + m.slice(1);
+            btn.textContent = m.charAt(0).toUpperCase() + m.slice(1);
             btn.onclick = () => {
                 this.setMode(m as any);
                 // Update active state
@@ -219,6 +221,9 @@ export class App {
         displayArea.appendChild(barContainer);
 
         this.uiWrapper.appendChild(displayArea);
+
+        // Initialize Learn Mode View
+        this.learnModeView = new LearnModeView(this.uiWrapper);
 
         // --- Debug Panel ---
         this.debugPanel = document.createElement('div');
@@ -490,6 +495,12 @@ export class App {
             if (mode === 'capture') this.capturePanel.classList.remove('hidden');
             else this.capturePanel.classList.add('hidden');
         }
+
+        if (this.learnModeView) {
+            if (mode === 'learn') this.learnModeView.show();
+            else this.learnModeView.hide();
+        }
+
         if (this.captionElement) {
             this.captionElement.style.display = mode === 'interpret' ? 'block' : 'none';
         }

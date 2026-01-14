@@ -1,7 +1,7 @@
 # Implementation Plan - Learn Mode
 
 ## Phase 1: Core UI & Navigation
-- [ ] Task: Create Learn Mode Container Component
+- [~] Task: Create Learn Mode Container Component
     - [ ] Create `src/ui/LearnMode/LearnModeView.ts` (or similar structure).
     - [ ] Implement basic layout matching the Cyberpunk HUD style.
     - [ ] Add navigation to switch between "Interpret Mode" and "Learn Mode" in `src/ui/App.ts`.
