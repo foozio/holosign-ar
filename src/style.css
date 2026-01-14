@@ -1,3 +1,4 @@
+
 /* --- Reference Display --- */
 .reference-display {
   display: flex;
@@ -5,6 +6,10 @@
   align-items: center;
   width: 100%;
   margin-bottom: var(--spacing-md);
+  /* Add a subtle glow/container */
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: var(--spacing-sm);
 }
 
 .reference-image {
@@ -14,4 +19,12 @@
   border: 1px solid var(--glass-border);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   object-fit: contain;
+  /* Add a cool transition */
+  transition: transform 0.3s ease;
+}
+
+.reference-image:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+  border-color: var(--color-primary);
 }
