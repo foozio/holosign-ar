@@ -15,7 +15,7 @@
 - [x] Task: Connect Recognition Logic 16e6c6b
     - [ ] In `LearnModeView`, subscribe to `Recognizer` output.
     - [ ] Implement logic to compare the `Recognizer`'s predicted sign with the *selected* sign.
-- [~] Task: Implement Visual Feedback
+- [x] Task: Implement Visual Feedback 488483f
     - [ ] Create `src/ui/LearnMode/FeedbackOverlay.ts`.
     - [ ] specific visual cues:
         - Red/Neutral border: No match.
