@@ -42,4 +42,11 @@ describe('LearnModeView', () => {
         expect(header).toBeDefined();
         expect(header?.textContent).toBe('LEARN MODE');
     });
+
+    it('should render the SignSelector', () => {
+        const selector = container.querySelector('.sign-selector');
+        expect(selector).toBeDefined();
+        // Check if signs are rendered
+        expect(selector?.textContent).toContain('A');
+    });
 });

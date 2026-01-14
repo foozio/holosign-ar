@@ -5,7 +5,7 @@
     - [ ] Create `src/ui/LearnMode/LearnModeView.ts` (or similar structure).
     - [ ] Implement basic layout matching the Cyberpunk HUD style.
     - [ ] Add navigation to switch between "Interpret Mode" and "Learn Mode" in `src/ui/App.ts`.
-- [ ] Task: Implement Sign Selector
+- [~] Task: Implement Sign Selector
     - [ ] Create `src/ui/LearnMode/SignSelector.ts`.
     - [ ] Populate with list of supported signs (A-E, 1-3, HELLO).
     - [ ] Handle selection events to update the active sign state.

@@ -1,59 +1,36 @@
-
-/* --- Learn Mode --- */
-.learn-mode-view {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  max-width: 600px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--color-primary);
-  border-radius: 16px;
-  padding: var(--spacing-lg);
-  box-shadow: 0 0 20px rgba(0, 229, 255, 0.2), inset 0 0 20px rgba(0, 229, 255, 0.05);
+/* --- Sign Selector --- */
+.sign-selector {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: var(--color-text);
-  pointer-events: auto;
-  animation: scaleIn 0.3s ease-out;
-}
-
-.learn-mode-view h2 {
-  font-size: 2rem;
-  margin: 0 0 var(--spacing-md) 0;
-  color: var(--color-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  text-shadow: 0 0 10px var(--color-primary);
-  border-bottom: 2px solid var(--color-primary);
-  padding-bottom: var(--spacing-sm);
-  width: 100%;
-  text-align: center;
-}
-
-.learn-content {
-  width: 100%;
-  min-height: 200px;
-  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  align-items: center;
-  border: 1px dashed var(--glass-border);
-  border-radius: 8px;
+  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
-  color: var(--color-text-muted);
+  width: 100%;
 }
 
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
+.sign-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: var(--color-text-muted);
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  font-family: var(--font-main);
+  font-weight: 700;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sign-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text);
+  transform: translateY(-2px);
+}
+
+.sign-btn.active {
+  background: var(--color-primary);
+  color: #000;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+  border-color: var(--color-primary);
 }
