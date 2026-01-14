@@ -13,7 +13,7 @@
 - [x] Task: Implement Training Script 74f94af
     - [ ] Create `ml_pipeline/train_yolo.py` using the Ultralytics API.
     - [ ] Define hyperparameters and model configuration.
-- [ ] Task: Export to Browser-Compatible Format
+- [x] Task: Export to Browser-Compatible Format 077979b
     - [ ] Implement export logic (e.g., `model.export(format='tfjs')`).
     - [ ] Optimize the model for web performance (quantization).
 - [ ] Task: Conductor - User Manual Verification 'Model Training & Export' (Protocol in workflow.md)
