@@ -168,6 +168,14 @@ export class App {
                     this.captionElement.innerText = "...";
                     this.confidenceElement.style.width = '0%';
                 }
+            } else if (this.mode === 'learn') {
+                if (smoothedHands.length > 0) {
+                    const hand = smoothedHands[0];
+                    const recognition = this.recognizer.process(result.timestamp, hand.landmarks);
+                    this.learnModeView.updateRecognition(recognition);
+                } else {
+                    this.learnModeView.updateRecognition(null);
+                }
             } else if (this.mode === 'capture') {
                 // Capture logic
                 this.captureController.processFrame(smoothedResult);

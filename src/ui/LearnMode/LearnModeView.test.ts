@@ -49,4 +49,36 @@ describe('LearnModeView', () => {
         // Check if signs are rendered
         expect(selector?.textContent).toContain('A');
     });
+
+    it('should update status message when a recognition result is received', () => {
+        view.show();
+        // Select 'A'
+        const btnA = Array.from(container.querySelectorAll('.sign-btn')).find(b => b.textContent === 'A') as HTMLButtonElement;
+        btnA.click();
+
+        // Send matching recognition result
+        view.updateRecognition({
+            label: 'A',
+            confidence: 0.9,
+            type: 'static'
+        });
+
+        const status = container.querySelector('.status-message');
+        expect(status?.textContent).toContain('Success');
+    });
+
+    it('should show matching status when recognition result matches selected sign but low confidence', () => {
+        view.show();
+        const btnB = Array.from(container.querySelectorAll('.sign-btn')).find(b => b.textContent === 'B') as HTMLButtonElement;
+        btnB.click();
+
+        view.updateRecognition({
+            label: 'B',
+            confidence: 0.4,
+            type: 'static'
+        });
+
+        const status = container.querySelector('.status-message');
+        expect(status?.textContent).toContain('Keep holding');
+    });
 });

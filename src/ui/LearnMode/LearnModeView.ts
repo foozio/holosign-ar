@@ -1,11 +1,13 @@
 // src/ui/LearnMode/LearnModeView.ts
 import { SignSelector } from './SignSelector';
+import type { RecognitionResult } from '../../recognition/Recognizer';
 
 export class LearnModeView {
     private container: HTMLElement;
     private viewElement: HTMLElement;
     private signSelector!: SignSelector; // Initialized in setupLayout
     private selectedSign: string | null = null;
+    private statusElement!: HTMLElement;
 
     constructor(container: HTMLElement) {
         this.container = container;
@@ -30,17 +32,45 @@ export class LearnModeView {
             this.handleSignSelect(sign);
         });
 
-        // Placeholder content
+        // Status / Feedback area
+        this.statusElement = document.createElement('div');
+        this.statusElement.className = 'status-message';
+        this.statusElement.textContent = 'Select a sign to practice';
+        this.viewElement.appendChild(this.statusElement);
+
+        // Placeholder for reference display (Phase 3)
         const content = document.createElement('div');
         content.className = 'learn-content';
-        content.textContent = 'Select a sign to practice';
         this.viewElement.appendChild(content);
     }
 
     private handleSignSelect(sign: string) {
         this.selectedSign = sign;
-        const content = this.viewElement.querySelector('.learn-content');
-        if (content) content.textContent = `Practice sign: ${sign}`;
+        this.statusElement.textContent = `Target: ${sign}. Waiting for gesture...`;
+        this.statusElement.className = 'status-message';
+    }
+
+    public updateRecognition(result: RecognitionResult | null) {
+        if (!this.selectedSign) return;
+
+        if (!result || result.label === '...') {
+            this.statusElement.textContent = `Target: ${this.selectedSign}. Waiting for gesture...`;
+            this.statusElement.className = 'status-message';
+            return;
+        }
+
+        if (result.label === this.selectedSign) {
+            if (result.confidence > 0.8) {
+                this.statusElement.textContent = `Success! Perfect ${this.selectedSign}`;
+                this.statusElement.className = 'status-message success';
+            } else if (result.confidence > 0.3) {
+                this.statusElement.textContent = `Matching ${this.selectedSign}... Keep holding!`;
+                this.statusElement.className = 'status-message matching';
+            }
+        } else {
+            this.statusElement.textContent = `Detected: ${result.label}. Try ${this.selectedSign}`;
+            this.statusElement.className = 'status-message mismatch';
+        }
     }
 
     public show() {
