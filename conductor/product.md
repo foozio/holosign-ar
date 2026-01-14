@@ -20,4 +20,4 @@ A browser-based augmented reality 3D ASL hand-gesture interpreter using MediaPip
     - **Static Signs:** Alphabet (A-E) and Numbers (1-3).
     - **Dynamic Signs:** Gestures like "HELLO" (Wave).
 - **Interpret Mode:** Live captioning of detected signs with confidence scores.
-- **Learn Mode:** A dedicated mode for users to practice specific signs (currently in development).
+- **Learn Mode:** A dedicated mode for users to select specific signs to practice with visual reference images and real-time success feedback.
