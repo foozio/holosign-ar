@@ -3,7 +3,7 @@ import type { HandFeaturesData } from '../features/HandFeatures';
 import { StaticASLClassifier } from './asl/StaticASLClassifier';
 import { DynamicASLDetector } from './asl/DynamicASLDetector';
 import type { Landmark } from '@mediapipe/hands';
-// import { ModelLoader } from '../ml/ModelLoader';
+import { ModelLoader } from '../ml/ModelLoader';
 import { StaticModelRunner } from '../ml/StaticModelRunner';
 import { DynamicModelRunner } from '../ml/DynamicModelRunner';
 
@@ -24,13 +24,12 @@ export class Recognizer {
     private useML = false;
 
     // State
-    // private lastResult: RecognitionResult | null = null;
     private frameCount = 0;
     private staticHistory: { label: string; confidence: number }[] = [];
     private readonly historySize = 5;
     private readonly debounceThreshold = 4;
     private lastLandmarks: Landmark[] | null = null;
-    private readonly motionThreshold = 0.05; // 5% screen width/height per frame
+    private readonly motionThreshold = 0.05; 
 
     constructor() {
         this.dynamicDetector = new DynamicASLDetector();
@@ -43,17 +42,14 @@ export class Recognizer {
 
     private async loadModels() {
         try {
-            // Placeholder paths - these files don't exist yet
-            // const staticModel = await ModelLoader.loadModel('/models/static_model/model.json');
-            // this.staticRunner.setModel(staticModel);
+            // Load YOLO model (exported as GraphModel)
+            const staticModel = await ModelLoader.loadGraphModel('/models/yolo_asl/model.json');
+            this.staticRunner.setModel(staticModel);
 
-            // const dynamicModel = await ModelLoader.loadModel('/models/dynamic_model/model.json');
-            // this.dynamicRunner.setModel(dynamicModel);
-
-            // console.log('ML Models loaded');
-            // this.useML = true; // Enable ML when loaded
+            console.log('YOLO ASL Model loaded');
+            this.useML = true; 
         } catch (e) {
-            console.warn('Could not load ML models, falling back to rules', e);
+            console.warn('Could not load YOLO model, falling back to rules', e);
         }
     }
 
@@ -62,7 +58,7 @@ export class Recognizer {
 
         // Motion Gating
         if (this.isMoving(landmarks)) {
-            this.staticHistory = []; // Reset history on fast motion
+            this.staticHistory = []; 
             this.lastLandmarks = landmarks;
             return { label: '...', confidence: 0, type: 'static' };
         }
@@ -80,7 +76,6 @@ export class Recognizer {
     private isMoving(current: Landmark[]): boolean {
         if (!this.lastLandmarks) return false;
 
-        // Track key points: Wrist(0), IndexTip(8), ThumbTip(4)
         const indices = [0, 4, 8, 12, 16, 20];
         let totalDist = 0;
 
@@ -95,14 +90,14 @@ export class Recognizer {
     }
 
     private processML(features: HandFeaturesData): RecognitionResult | null {
-        // Dynamic ML
+        // Dynamic ML (placeholder)
         const dynRes = this.dynamicRunner.process(features);
         if (dynRes) {
             this.staticHistory = [];
             return { ...dynRes, type: 'dynamic' };
         }
 
-        // Static ML
+        // Static ML (YOLO)
         const staticRes = this.staticRunner.predict(features);
 
         // Smoothing
@@ -118,17 +113,14 @@ export class Recognizer {
     }
 
     private processRules(timestamp: number, features: HandFeaturesData): RecognitionResult | null {
-        // Dynamic Rule
         const dynamicRes = this.dynamicDetector.detect(timestamp, features);
         if (dynamicRes) {
             this.staticHistory = [];
             return { ...dynamicRes, type: 'dynamic' };
         }
 
-        // Static Rule
         const staticRes = StaticASLClassifier.classify(features);
 
-        // Smoothing
         if (staticRes) {
             this.staticHistory.push({ label: staticRes.label, confidence: staticRes.confidence });
         } else {
@@ -136,7 +128,6 @@ export class Recognizer {
         }
         if (this.staticHistory.length > this.historySize) this.staticHistory.shift();
 
-        // Consensus
         return this.getConsensus(staticRes?.debugReasons);
     }
 

@@ -3,15 +3,14 @@ import { FeatureVector } from './FeatureVector';
 import type { HandFeaturesData } from '../features/HandFeatures';
 
 export class StaticModelRunner {
-    private model: tf.LayersModel | null = null;
+    private model: tf.LayersModel | tf.GraphModel | null = null;
     private labels: string[] = ['A', 'B', 'C', 'D', 'E', '1', '2', '3', 'NONE'];
-    // TODO: Load labels dynamically or from config
 
-    constructor(model?: tf.LayersModel) {
+    constructor(model?: tf.LayersModel | tf.GraphModel) {
         if (model) this.model = model;
     }
 
-    setModel(model: tf.LayersModel) {
+    setModel(model: tf.LayersModel | tf.GraphModel) {
         this.model = model;
     }
 
@@ -21,8 +20,17 @@ export class StaticModelRunner {
         const probabilities = tf.tidy(() => {
             const vector = FeatureVector.extract(features);
             const input = tf.tensor2d([vector]);
-            const output = this.model!.predict(input) as tf.Tensor;
-            return Array.from(output.dataSync());
+            
+            let output: tf.Tensor;
+            if (this.model instanceof tf.LayersModel) {
+                output = this.model.predict(input) as tf.Tensor;
+            } else {
+                // GraphModel - execute method
+                output = this.model.execute(input) as tf.Tensor;
+            }
+            
+            // Standardize output to 1D array of probabilities
+            return Array.from(output.squeeze().dataSync());
         });
 
         const maxIdx = probabilities.indexOf(Math.max(...probabilities));
@@ -30,7 +38,7 @@ export class StaticModelRunner {
         // Threshold
         if (probabilities[maxIdx] > 0.7) {
             return {
-                label: this.labels[maxIdx],
+                label: this.labels[maxIdx] || 'UNKNOWN',
                 confidence: probabilities[maxIdx]
             };
         }
