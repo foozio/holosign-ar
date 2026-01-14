@@ -10,7 +10,7 @@
 - [x] Task: Conductor - User Manual Verification 'Data & Pipeline Setup' (Protocol in workflow.md)
 
 ## Phase 2: Model Training & Export
-- [ ] Task: Implement Training Script
+- [x] Task: Implement Training Script 74f94af
     - [ ] Create `ml_pipeline/train_yolo.py` using the Ultralytics API.
     - [ ] Define hyperparameters and model configuration.
 - [ ] Task: Export to Browser-Compatible Format
