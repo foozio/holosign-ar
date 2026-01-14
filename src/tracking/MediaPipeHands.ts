@@ -60,7 +60,12 @@ export class MediaPipeHands {
     }
 
     async send(image: HTMLVideoElement) {
-        await this.hands.send({ image });
+        try {
+            await this.hands.send({ image });
+        } catch (error) {
+            console.error("MediaPipe Send Error:", error);
+            // Optional: dispatch error event or try to reset
+        }
     }
 
     stop() {

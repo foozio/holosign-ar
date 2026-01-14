@@ -32,6 +32,11 @@ export class OneEuroFilter {
         const dt = (t - this.tPrev) / 1000.0; // Convert to seconds
         this.tPrev = t;
 
+        // Guard against zero/negative dt (duplicate frames or clock skew)
+        if (dt <= 0) {
+            return this.xPrev as number;
+        }
+
         // Compute alpha for the derivative
         const aD = this.smoothingFactor(dt, this.dCutoff);
         const dx = (x - (this.xPrev as number)) / dt;

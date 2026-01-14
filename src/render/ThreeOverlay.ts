@@ -41,6 +41,15 @@ export class ThreeOverlay {
         this.renderer.setSize(container.clientWidth, container.clientHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio); // Default high quality
         this.renderer.setClearColor(0x000000, 0); // Transparent
+
+        // Ensure canvas overlays correctly
+        this.renderer.domElement.style.position = 'absolute';
+        this.renderer.domElement.style.top = '0';
+        this.renderer.domElement.style.left = '0';
+        this.renderer.domElement.style.width = '100%';
+        this.renderer.domElement.style.height = '100%';
+        this.renderer.domElement.style.pointerEvents = 'none'; // Let clicks pass through
+
         container.appendChild(this.renderer.domElement);
 
         const light = new THREE.DirectionalLight(0xffffff, 1);
@@ -69,7 +78,7 @@ export class ThreeOverlay {
         const cylGeo = new THREE.CylinderGeometry(0.01, 0.01, 1, 8);
 
         const cylMat = new THREE.MeshBasicMaterial({
-            color: 0x00ff00,
+            color: 0x39ff14, // Neon Green
             transparent: true,
             opacity: 1.0
         });

@@ -108,17 +108,26 @@ export class HandFeatures {
                 // But hand can be rotated.
 
                 // Robust way: Distance to wrist.
+                // Robust way: Distance to wrist.
                 const dTip = this.norm(landmarks[finger.tip]); // Dist to wrist (0,0,0)
                 const dPip = this.norm(landmarks[finger.pip]);
 
                 isExtended = dTip > dPip;
-                curlScore = isExtended ? 0 : 1;
 
-                // Refine with Bend Angle at PIP
+                // Continuous Curl Score based on PIP angle
+                // 180 degrees (straight) -> 0.0
+                // 50 degrees (fully curled) -> 1.0
                 const angle = this.angle(landmarks[finger.mcp], landmarks[finger.pip], landmarks[finger.tip]);
-                if (angle < 90) {
+
+                // Map 180..50 to 0..1
+                const rawScore = (180 - angle) / 130;
+                curlScore = Math.max(0, Math.min(1, rawScore));
+
+                // Override extension if curled enough
+                if (curlScore > 0.4) {
                     isExtended = false;
-                    curlScore = 1;
+                } else if (curlScore < 0.3) {
+                    isExtended = true;
                 }
             }
 

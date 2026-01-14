@@ -25,6 +25,7 @@ export class App {
 
     // UI Elements
     private captionElement!: HTMLElement;
+    private confidenceElement!: HTMLElement;
     private debugPanel!: HTMLElement;
     private modeElement!: HTMLElement;
     private capturePanel!: HTMLElement;
@@ -49,17 +50,24 @@ export class App {
     private frameCount: number = 0;
     private lowFpsCount: number = 0;
     private currentQuality: 'high' | 'low' = 'high';
+    private lastHandCount: number = 0;
+
+    // Recovery
+    private lastTrackingDate: number = Date.now();
+    private isRecovering: boolean = false;
+    private readonly WATCHDOG_THRESHOLD_MS = 2000;
 
     constructor(containerId: string) {
         const root = document.getElementById(containerId);
         if (!root) throw new Error(`Container #${containerId} not found`);
         this.container = root;
 
-        // wrapper
+        // Wrapper for video background
         this.videoWrapper = document.createElement('div');
         this.videoWrapper.className = 'video-container';
         this.container.appendChild(this.videoWrapper);
 
+        // Wrapper for UI Overlay
         this.uiWrapper = document.createElement('div');
         this.uiWrapper.className = 'ui-container';
         this.container.appendChild(this.uiWrapper);
@@ -91,17 +99,34 @@ export class App {
 
         // Tracking callback
         this.hands.setCallback((result: TrackingResult) => {
+            this.lastTrackingDate = Date.now();
+
             // Filter by Handedness Lock
             let filteredHands = result.hands;
             if (this.handednessLock !== 'Auto') {
                 filteredHands = filteredHands.filter(h => h.handedness === this.handednessLock);
             }
 
+            // Reset smoothing if hands were lost and just returned
+            if (filteredHands.length > 0 && this.lastHandCount === 0) {
+                console.log("Hands re-entered, resetting smoother");
+                this.smoother.reset();
+            }
+            this.lastHandCount = filteredHands.length;
+
             // 1. Smooth landmarks
             const smoothedHands = filteredHands.map((hand: HandResult) => {
                 const smoothedLandmarks = this.smoother.smooth(result.timestamp, hand.landmarks, hand.score);
+
+                // Safety: Check for NaNs
+                if (Number.isNaN(smoothedLandmarks[0].x)) {
+                    console.warn("Smoother returned NaNs! Resetting.");
+                    this.smoother.reset();
+                    return { ...hand, landmarks: hand.landmarks, score: 0 }; // Fallback to raw or discard
+                }
+
                 return { ...hand, landmarks: smoothedLandmarks };
-            });
+            }).filter(h => h.score > 0); // Filter out invalidated hands
 
             const smoothedResult = { ...result, hands: smoothedHands };
 
@@ -122,13 +147,24 @@ export class App {
                 if (smoothedHands.length > 0) {
                     // Prefer right hand or first hand
                     const hand = smoothedHands[0];
-                    const recognition = this.recognizer.process(result.timestamp, hand.landmarks);
-                    if (recognition) {
-                        this.updateCaption(recognition);
-                        if (this.debugMode) this.updateDebug(recognition);
+
+                    // Filter low confidence hands to prevent "Stuck on E" (Ghosting)
+                    if (hand.score < 0.6) {
+                        this.captionElement.innerText = "...";
+                        this.confidenceElement.style.width = '0%';
+                        if (this.debugMode) {
+                            this.debugPanel.innerHTML = `<h3>Low Confidence: ${(hand.score * 100).toFixed(0)}%</h3>`;
+                        }
+                    } else {
+                        const recognition = this.recognizer.process(result.timestamp, hand.landmarks);
+                        if (recognition) {
+                            this.updateCaption(recognition);
+                            if (this.debugMode) this.updateDebug(recognition);
+                        }
                     }
                 } else {
-                    this.captionElement.innerText = "No hands detected";
+                    this.captionElement.innerText = "...";
+                    this.confidenceElement.style.width = '0%';
                 }
             } else if (this.mode === 'capture') {
                 // Capture logic
@@ -142,58 +178,73 @@ export class App {
     }
 
     private setupUI() {
-        // Header
+        // --- Header (Top HUD) ---
         const header = document.createElement('header');
         header.innerHTML = '<h1>HoloSign AR</h1>';
-        this.uiWrapper.appendChild(header);
 
         // Mode Switcher
         this.modeElement = document.createElement('div');
         this.modeElement.className = 'mode-switch';
         ['interpret', 'capture'].forEach(m => {
             const btn = document.createElement('button');
-            btn.innerText = m.toUpperCase();
-            btn.onclick = () => this.setMode(m as any);
+            btn.className = `mode-btn ${this.mode === m ? 'active' : ''}`;
+            btn.innerText = m.charAt(0).toUpperCase() + m.slice(1);
+            btn.onclick = () => {
+                this.setMode(m as any);
+                // Update active state
+                Array.from(this.modeElement.children).forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+            };
             this.modeElement.appendChild(btn);
         });
-        this.uiWrapper.appendChild(this.modeElement);
+        header.appendChild(this.modeElement);
+        this.uiWrapper.appendChild(header);
 
-        // Caption Display
+        // --- Main Display Area (Center) ---
+        const displayArea = document.createElement('div');
+        displayArea.className = 'display-area';
+
+        // Caption
         this.captionElement = document.createElement('div');
         this.captionElement.className = 'caption-display';
-        this.captionElement.innerText = "Waiting for hands...";
-        this.uiWrapper.appendChild(this.captionElement);
+        this.captionElement.innerText = "...";
+        displayArea.appendChild(this.captionElement);
 
-        // Debug Panel
+        // Confidence Bar
+        const barContainer = document.createElement('div');
+        barContainer.className = 'confidence-bar';
+        this.confidenceElement = document.createElement('div');
+        this.confidenceElement.className = 'confidence-fill';
+        barContainer.appendChild(this.confidenceElement);
+        displayArea.appendChild(barContainer);
+
+        this.uiWrapper.appendChild(displayArea);
+
+        // --- Debug Panel ---
         this.debugPanel = document.createElement('div');
-        this.debugPanel.className = 'debug-panel';
-        this.debugPanel.style.display = 'none';
+        this.debugPanel.className = 'debug-panel hidden'; // Hidden by default
         this.uiWrapper.appendChild(this.debugPanel);
 
-        // Toggle Debug
-        const debugBtn = document.createElement('button');
-        debugBtn.className = 'debug-toggle';
-        debugBtn.innerText = '🐞';
-        debugBtn.onclick = () => {
-            this.debugMode = !this.debugMode;
-            this.debugPanel.style.display = this.debugMode ? 'block' : 'none';
-        };
-        this.uiWrapper.appendChild(debugBtn);
+        // --- Footer Controls (Bottom HUD) ---
+        const footer = document.createElement('div');
+        footer.className = 'footer-controls';
 
-        // Controls container
-        const controls = document.createElement('div');
-        controls.className = 'quick-controls';
+        // Quick Controls Panel
+        const quickPanel = document.createElement('div');
+        quickPanel.className = 'panel quick-controls';
 
         // Mirror Toggle
         const mirrorBtn = document.createElement('button');
-        mirrorBtn.innerText = '↔️';
+        mirrorBtn.className = 'icon-btn';
+        mirrorBtn.innerHTML = '↔️';
         mirrorBtn.title = 'Toggle Mirror';
         mirrorBtn.onclick = () => {
             this.mirrorVideo = !this.mirrorVideo;
+            mirrorBtn.classList.toggle('active');
             if (this.mirrorVideo) this.webcam.videoElement.classList.remove('unmirrored');
             else this.webcam.videoElement.classList.add('unmirrored');
         };
-        controls.appendChild(mirrorBtn);
+        quickPanel.appendChild(mirrorBtn);
 
         // Hand Lock
         const lockSel = document.createElement('select');
@@ -204,14 +255,12 @@ export class App {
             lockSel.appendChild(o);
         });
         lockSel.onchange = (e) => this.handednessLock = (e.target as HTMLSelectElement).value as any;
-        controls.appendChild(lockSel);
-
-        this.uiWrapper.appendChild(controls);
+        quickPanel.appendChild(lockSel);
 
         // Calibrate Button
         const calibBtn = document.createElement('button');
-        calibBtn.className = 'calib-btn';
-        calibBtn.innerText = '📏';
+        calibBtn.className = 'icon-btn';
+        calibBtn.innerHTML = '📏';
         calibBtn.title = 'Calibrate Depth (Hold hand up for 3s)';
         calibBtn.onclick = () => {
             if (!this.calibrator.isActive) {
@@ -220,26 +269,46 @@ export class App {
                 setTimeout(() => calibBtn.classList.remove('active'), 3000);
             }
         };
-        this.uiWrapper.appendChild(calibBtn);
+        quickPanel.appendChild(calibBtn);
 
-        // Capture Panel (Hidden by default)
+        // Debug Toggle
+        const debugBtn = document.createElement('button');
+        debugBtn.className = 'icon-btn';
+        debugBtn.innerText = '🐞';
+        debugBtn.onclick = () => {
+            this.debugMode = !this.debugMode;
+            debugBtn.classList.toggle('active');
+            this.debugPanel.classList.toggle('hidden');
+        };
+        quickPanel.appendChild(debugBtn);
+
+        footer.appendChild(quickPanel);
+        this.uiWrapper.appendChild(footer);
+
+        // --- Capture Panel (Hidden by default, appended to footer when active) ---
         this.createCapturePanel();
+        // Initially attached but hidden via CSS or state logic
+        footer.appendChild(this.capturePanel);
 
         // Countdown Overlay
         const countdown = document.createElement('div');
         countdown.id = 'countdown-display';
         countdown.className = 'countdown-overlay';
         this.uiWrapper.appendChild(countdown);
+
+        // Initial State
+        this.setMode('interpret');
     }
 
     private createCapturePanel() {
         this.capturePanel = document.createElement('div');
-        this.capturePanel.className = 'capture-controls';
-        this.capturePanel.style.display = 'none';
+        this.capturePanel.className = 'panel capture-controls hidden';
 
-        // Label selection
-        const row1 = document.createElement('div');
-        row1.className = 'capture-row';
+        // Header
+        const header = document.createElement('div');
+        header.className = 'capture-header';
+
+        // Label Select
         const labelSelect = document.createElement('select');
         ['A', 'B', 'C', 'D', 'E', '1', '2', '3', 'HELLO', 'IDLE_OPEN', 'IDLE_FIST'].forEach(l => {
             const opt = document.createElement('option');
@@ -247,10 +316,13 @@ export class App {
             opt.text = l;
             labelSelect.appendChild(opt);
         });
-        labelSelect.onchange = (e) => this.captureLabel = (e.target as HTMLSelectElement).value;
-        row1.appendChild(labelSelect);
+        labelSelect.onchange = (e) => {
+            this.captureLabel = (e.target as HTMLSelectElement).value;
+            this.updateGuideImage(this.captureLabel);
+        };
+        header.appendChild(labelSelect);
 
-        // Type Toggle
+        // Type & Hand Select
         const typeSelect = document.createElement('select');
         ['static', 'dynamic'].forEach(t => {
             const opt = document.createElement('option');
@@ -259,9 +331,8 @@ export class App {
             typeSelect.appendChild(opt);
         });
         typeSelect.onchange = (e) => this.captureType = (e.target as HTMLSelectElement).value as SampleType;
-        row1.appendChild(typeSelect);
+        header.appendChild(typeSelect);
 
-        // Handedness
         const handSelect = document.createElement('select');
         ['Right', 'Left'].forEach(h => {
             const opt = document.createElement('option');
@@ -270,50 +341,81 @@ export class App {
             handSelect.appendChild(opt);
         });
         handSelect.onchange = (e) => this.captureHandedness = (e.target as HTMLSelectElement).value as Handedness;
-        row1.appendChild(handSelect);
-        this.capturePanel.appendChild(row1);
+        header.appendChild(handSelect);
 
-        // Info / Stats
+        this.capturePanel.appendChild(header);
+
+        // Guide Image
+        const guideContainer = document.createElement('div');
+        guideContainer.className = 'guide-container';
+        const guideImg = document.createElement('img');
+        guideImg.id = 'guide-image';
+        guideImg.className = 'guide-image';
+        guideImg.alt = 'Gesture Guide';
+        guideContainer.appendChild(guideImg);
+        this.capturePanel.appendChild(guideContainer);
+
+        // Init guide
+        this.updateGuideImage('A');
+
+        // Stats
         const stats = document.createElement('div');
-        stats.className = 'capture-info';
-        stats.id = 'capture-stats';
-        stats.innerText = 'Samples: 0 | Frames: 0';
+        stats.className = 'stats-grid';
+        stats.innerHTML = `
+            <div class="stat-item"><span id="stat-samples-val">0</span><span>Samples</span></div>
+            <div class="stat-item"><span id="stat-frames-val">0</span><span>Frames</span></div>
+            <div class="stat-item"><span id="stat-rej-val">0</span><span>Rejected</span></div>
+        `;
         this.capturePanel.appendChild(stats);
 
-        // Buttons
-        const row2 = document.createElement('div');
-        row2.className = 'capture-row';
+        // Controls
+        const controls = document.createElement('div');
+        controls.className = 'capture-row';
+        controls.style.marginTop = '10px';
 
         const recBtn = document.createElement('button');
-        recBtn.className = 'capture-btn';
+        recBtn.className = 'primary-btn';
         recBtn.innerText = 'Record';
         recBtn.id = 'btn-record';
         recBtn.onclick = () => this.toggleRecord();
-        row2.appendChild(recBtn);
+        recBtn.onclick = () => this.toggleRecord();
+        controls.appendChild(recBtn);
 
-        this.capturePanel.appendChild(row2);
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'secondary-btn hidden'; // Hidden by default
+        cancelBtn.innerText = 'Cancel';
+        cancelBtn.id = 'btn-cancel';
+        cancelBtn.style.marginTop = '8px';
+        cancelBtn.style.color = 'var(--color-danger)';
+        cancelBtn.onclick = () => this.captureController.stop(false);
+        controls.appendChild(cancelBtn);
 
-        // Export Row
-        const row3 = document.createElement('div');
-        row3.className = 'capture-row';
+        this.capturePanel.appendChild(controls);
+
+        // Action Row
+        const actions = document.createElement('div');
+        actions.className = 'capture-row';
+
         const dlBtn = document.createElement('button');
-        dlBtn.className = 'capture-btn';
+        dlBtn.className = 'secondary-btn';
         dlBtn.innerText = 'Download JSON';
         dlBtn.onclick = () => this.datasetStore.download();
-        row3.appendChild(dlBtn);
+        actions.appendChild(dlBtn);
 
         const clearBtn = document.createElement('button');
-        clearBtn.className = 'capture-btn danger';
-        clearBtn.innerText = 'Clear';
+        clearBtn.className = 'secondary-btn';
+        clearBtn.innerText = 'Clear Data';
+        clearBtn.style.color = 'var(--color-danger)';
+        clearBtn.style.borderColor = 'rgba(255, 71, 87, 0.3)';
         clearBtn.onclick = () => {
-            this.datasetStore.clear();
-            this.updateCaptureStats(0, 0, 0); // Reset UI stats
+            if (confirm('Clear all recorded samples?')) {
+                this.datasetStore.clear();
+                this.updateCaptureStats(0, 0, 0);
+            }
         };
-        row3.appendChild(clearBtn);
+        actions.appendChild(clearBtn);
 
-        this.capturePanel.appendChild(row3);
-
-        this.uiWrapper.appendChild(this.capturePanel);
+        this.capturePanel.appendChild(actions);
     }
 
     private setupCaptureCallbacks() {
@@ -330,9 +432,11 @@ export class App {
             if (el) el.style.display = 'none';
             const btn = document.getElementById('btn-record');
             if (btn) {
-                btn.innerText = 'Stop';
+                btn.innerText = 'Stop (Save)';
                 btn.classList.add('danger');
             }
+            const cancelBtn = document.getElementById('btn-cancel');
+            if (cancelBtn) cancelBtn.classList.remove('hidden');
         };
 
         this.captureController.onRecordingStop = (sample) => {
@@ -341,10 +445,11 @@ export class App {
                 btn.innerText = 'Record';
                 btn.classList.remove('danger');
             }
+            const cancelBtn = document.getElementById('btn-cancel');
+            if (cancelBtn) cancelBtn.classList.add('hidden');
             if (sample) {
                 console.log('Saved sample', sample.id);
             }
-            // Update stats
             this.updateCaptureStats(this.datasetStore.getSamples().length, 0, 0);
         };
 
@@ -353,21 +458,19 @@ export class App {
         };
 
         this.captureController.onQualityWarning = (msg) => {
-            // Flash warning?
             console.warn(msg);
         };
     }
 
     private updateCaptureStats(samples: number, frames: number, rejected: number) {
-        const el = document.getElementById('capture-stats');
-        if (el) {
-            el.innerText = `Samples: ${samples} | Frames: ${frames} (Rej: ${rejected})`;
-        }
+        document.getElementById('stat-samples-val')!.innerText = samples.toString();
+        document.getElementById('stat-frames-val')!.innerText = frames.toString();
+        document.getElementById('stat-rej-val')!.innerText = rejected.toString();
     }
 
     private toggleRecord() {
         const btn = document.getElementById('btn-record');
-        if (btn?.innerText === 'Stop') {
+        if (btn?.innerText.includes('Stop')) {
             this.captureController.stop();
         } else {
             const config: CaptureConfig = {
@@ -384,7 +487,8 @@ export class App {
     private setMode(mode: 'interpret' | 'learn' | 'capture') {
         this.mode = mode;
         if (this.capturePanel) {
-            this.capturePanel.style.display = mode === 'capture' ? 'flex' : 'none';
+            if (mode === 'capture') this.capturePanel.classList.remove('hidden');
+            else this.capturePanel.classList.add('hidden');
         }
         if (this.captionElement) {
             this.captionElement.style.display = mode === 'interpret' ? 'block' : 'none';
@@ -392,14 +496,18 @@ export class App {
     }
 
     private updateCaption(result: RecognitionResult) {
-        this.captionElement.innerText = `${result.label} (${(result.confidence * 100).toFixed(0)}%)`;
+        this.captionElement.innerText = result.label;
+        if (this.confidenceElement) {
+            this.confidenceElement.style.width = `${result.confidence * 100}%`;
+        }
     }
 
     private updateDebug(result: RecognitionResult) {
         this.debugPanel.innerHTML = `
             <h3>Debug Info</h3>
-            <p>Label: ${result.label}</p>
-            <p>Confidence: ${result.confidence.toFixed(2)}</p>
+            <p><strong>Label:</strong> ${result.label}</p>
+            <p><strong>Confidence:</strong> ${result.confidence.toFixed(2)}</p>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 8px 0;">
             <pre>${JSON.stringify(result.debugInfo, null, 2)}</pre>
         `;
     }
@@ -410,32 +518,62 @@ export class App {
 
         if (delta >= 1000) {
             const fps = this.frameCount;
-            // FPS Logic
-            if (fps < 25) {
-                this.lowFpsCount++;
-            } else {
-                this.lowFpsCount = 0;
-            }
+            if (fps < 25) this.lowFpsCount++;
+            else this.lowFpsCount = 0;
 
-            // If consistently low FPS for 2 seconds, downgrade
             if (this.lowFpsCount > 2 && this.currentQuality === 'high') {
-                console.log("Low FPS detected. Downgrading rendering quality.");
+                console.log("Downgrading quality");
                 this.overlay.setQuality('low');
                 this.currentQuality = 'low';
-            }
-            // If FPS recovers (e.g. > 50), upgrade
-            else if (fps > 50 && this.currentQuality === 'low') {
-                console.log("FPS recovered. Upgrading rendering quality.");
+            } else if (fps > 50 && this.currentQuality === 'low') {
+                console.log("Upgrading quality");
                 this.overlay.setQuality('high');
                 this.currentQuality = 'high';
             }
 
             this.frameCount = 0;
             this.lastFrameTime = now;
+            this.lastFrameTime = now;
+        }
+
+        // Watchdog: Check if tracking has stalled
+        if (!this.isRecovering && (Date.now() - this.lastTrackingDate > this.WATCHDOG_THRESHOLD_MS)) {
+            console.warn("Tracking stalled! Attempting recovery...");
+            this.isRecovering = true;
+            this.recoverTracking();
         }
 
         this.frameCount++;
         requestAnimationFrame(this.loop);
-        // Rendering is event-driven via MediaPipe callbacks, but loop monitors performance
+    }
+
+    private async recoverTracking() {
+        try {
+            this.captionElement.innerText = "Recovering...";
+            await this.hands.start(this.webcam.videoElement);
+            this.lastTrackingDate = Date.now(); // Reset timer
+            console.log("Tracking recovery successful");
+        } catch (e) {
+            console.error("Recovery failed", e);
+        } finally {
+            this.isRecovering = false;
+        }
+    }
+
+    private updateGuideImage(label: string) {
+        const img = document.getElementById('guide-image') as HTMLImageElement;
+        if (img) {
+            // Check if we have an asset for this label
+            // In a real app we might check existence, here we know we have A-E
+            if (['A', 'B', 'C', 'D', 'E'].includes(label)) {
+                img.src = `./assets/reference/${label}.png`;
+                img.style.display = 'block';
+                (img.parentElement as HTMLElement).style.display = 'flex';
+            } else {
+                img.style.display = 'none';
+                (img.parentElement as HTMLElement).style.display = 'none';
+            }
+        }
     }
 }
+

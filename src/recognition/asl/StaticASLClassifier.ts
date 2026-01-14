@@ -19,6 +19,7 @@ export class StaticASLClassifier {
             candidates.push(this.checkA(features));
             candidates.push(this.checkE(features));
             candidates.push(this.checkS(features));
+            candidates.push(this.checkC(features)); // C can appear as 0 extensions if fingers are curved
         } else if (extCount === 1) {
             const extIdx = extendedIndices[0];
             if (extIdx === 1) {
@@ -107,8 +108,30 @@ export class StaticASLClassifier {
         return { label: 'B', confidence, debugReasons: [] };
     }
 
-    private static checkC(_features: HandFeaturesData): ClassificationResult {
-        let confidence = 0.8;
+    private static checkC(features: HandFeaturesData): ClassificationResult {
+        let confidence = 0.8; // Base confidence
+        const { fingerStates } = features;
+
+        // C Shape: Fingers curved but not closed (Curl 0.3 - 0.8)
+        [1, 2, 3, 4].forEach(i => {
+            const curl = fingerStates[i].curlScore;
+            if (curl < 0.2) confidence -= 0.2; // Too straight
+            if (curl > 0.85) confidence -= 0.3; // Too closed (looks like E/S)
+        });
+
+        // Thumb should be somewhat curved/opposed
+        // Simple check: Thumb index distance > 0 (it is always >0), but "C" gap
+        const { normalizedLandmarks } = features;
+        const thumbTip = normalizedLandmarks[4];
+        const indexTip = normalizedLandmarks[8];
+        const gap = Math.sqrt(Math.pow(thumbTip.x - indexTip.x, 2) + Math.pow(thumbTip.y - indexTip.y, 2));
+
+        // If gap is too small, it's 'O'. If huge, it's 'L' (sort of)
+        if (gap < 0.05) confidence -= 0.4; // O penalty
+
+        // C is usually sideways or diagonal, but can be upright. 
+        // We focus on finger curvature.
+
         return { label: 'C', confidence, debugReasons: [] };
     }
 
