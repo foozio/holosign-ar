@@ -12,7 +12,7 @@
 - [x] Task: Conductor - User Manual Verification 'Core UI & Navigation' (Protocol in workflow.md)
 
 ## Phase 2: Logic & Feedback Integration
-- [~] Task: Connect Recognition Logic
+- [x] Task: Connect Recognition Logic 16e6c6b
     - [ ] In `LearnModeView`, subscribe to `Recognizer` output.
     - [ ] Implement logic to compare the `Recognizer`'s predicted sign with the *selected* sign.
 - [ ] Task: Implement Visual Feedback
