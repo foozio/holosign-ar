@@ -19,7 +19,7 @@
 - [x] Task: Conductor - User Manual Verification 'Model Training & Export' (Protocol in workflow.md)
 
 ## Phase 3: Frontend Refactoring
-- [ ] Task: Update Model Loading
+- [x] Task: Update Model Loading 68492f2
     - [ ] Refactor `src/ml/ModelLoader.ts` to support the new exported format.
 - [ ] Task: Refactor Static Recognition Logic
     - [ ] Update `src/ml/StaticModelRunner.ts` to use the YOLO model output.
