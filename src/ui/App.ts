@@ -37,6 +37,7 @@ export class App {
     // State
     private mode: 'interpret' | 'learn' | 'capture' = 'interpret';
     private debugMode: boolean = false;
+    private isTransitioning: boolean = false;
 
     // Capture State
     private datasetStore: DatasetStore;
@@ -578,6 +579,7 @@ export class App {
 
     private setMode(mode: 'interpret' | 'learn' | 'capture') {
         this.mode = mode;
+        this.isTransitioning = false; // Reset any pending transitions
         if (this.capturePanel) {
             if (mode === 'capture') this.capturePanel.classList.remove('hidden');
             else this.capturePanel.classList.add('hidden');
@@ -619,7 +621,8 @@ export class App {
 
         if (fill) {
             fill.style.width = `${state.matchProgress * 100}%`;
-            if (state.isMatched) {
+            if (state.isMatched && !this.isTransitioning) {
+                this.isTransitioning = true;
                 fill.classList.add('success');
                 this.captionElement.classList.add('success-match');
                 if (msg) {
@@ -630,7 +633,7 @@ export class App {
                 
                 // Auto-advance after a short delay
                 setTimeout(() => {
-                    if (this.mode === 'learn' && state.isMatched) {
+                    if (this.mode === 'learn') {
                         const next = this.learnController.nextSign();
                         this.updateLearnTarget(next);
                         // Reset classes
@@ -640,8 +643,9 @@ export class App {
                             msg.classList.remove('success-pulse');
                         }
                     }
-                }, 1500); // Increased to 1.5s to enjoy the success
-            } else {
+                    this.isTransitioning = false;
+                }, 1500);
+            } else if (!state.isMatched && !this.isTransitioning) {
                 fill.classList.remove('success');
                 this.captionElement.classList.remove('success-match');
                 fill.style.backgroundColor = 'var(--color-primary)';
