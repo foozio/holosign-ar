@@ -13,6 +13,14 @@ export class LearnController {
 
     constructor() {}
 
+    setSigns(signs: string[]) {
+        if (signs && signs.length > 0) {
+            this.signs = signs;
+            this.currentIndex = 0;
+            this.resetMatch();
+        }
+    }
+
     getTarget(): string {
         return this.signs[this.currentIndex];
     }

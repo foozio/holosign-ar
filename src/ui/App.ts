@@ -93,6 +93,15 @@ export class App {
         this.calibrator = new Calibrator();
         this.learnController = new LearnController();
 
+        // Load classes for Learn Mode
+        fetch('/models/yolo_model/classes.json')
+            .then(res => res.json())
+            .then(classes => {
+                this.learnController.setSigns(classes);
+                console.log(`Learn Mode loaded with ${classes.length} signs.`);
+            })
+            .catch(err => console.warn('Could not load classes.json for Learn Mode, using defaults.', err));
+
         // Setup UI
         this.setupUI();
         this.setupCaptureCallbacks();
