@@ -18,7 +18,7 @@
 - [ ] Task: Update the UI to reflect any changes in detection confidence or labels.
 - [x] Task: Conductor - User Manual Verification 'Web Application Refactor' (Protocol in workflow.md) (c633f9a)
 
-## Phase 4: Optimization and Finalization
+## Phase 4: Optimization and Finalization [checkpoint: 047c29b]
 - [x] Task: Optimize inference performance for the browser. (f171246)
 - [x] Task: Final end-to-end testing of all supported signs. (82cdb72)
 - [x] Task: Conductor - User Manual Verification 'Optimization and Finalization' (Protocol in workflow.md) (1cb7222)
