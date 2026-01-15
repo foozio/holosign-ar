@@ -15,6 +15,7 @@
 - **YOLOv8 (Ultralytics)**: For high-accuracy gesture detection and classification.
 - **OpenCV**: Library for video processing and frame extraction.
 - **yt-dlp**: For downloading and processing datasets from external sources.
+- **Sharded Data Storage**: Organizing processed features by class for scalable ML training.
 
 ## Architecture
 - **Client-Side SPA**: The main application is a single-page application focused on high performance and low latency.

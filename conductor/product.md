@@ -9,7 +9,7 @@ To provide an accessible, high-performance, real-time tool for interpreting and 
 ## Core Features
 - **Real-time Hand Tracking**: High-performance detection of hand landmarks and gesture-based object detection using YOLOv8.
 - **3D Skeleton Overlay**: Immersive visualization of hand gestures in AR.
-- **Static & Dynamic ASL Recognition**: Interpreting both fixed poses and complex hand movements.
+- **Static & Dynamic ASL Recognition**: Interpreting both fixed poses and complex hand movements with an expanded vocabulary of 100+ signs.
 - **Interpret Mode**: Live captioning of signs with confidence levels.
 - **Learn Mode**: Interactive platform for users to practice and receive feedback on their ASL skills.
 
