@@ -15,7 +15,7 @@
 - [x] Task: Integrate the new model into the `StaticModelRunner` and `DynamicModelRunner`. (f171246)
     - [x] Write Tests: Create tests for the new model loading logic. (9b621d9)
     - [x] Implement: Replace existing MediaPipe landmark-based logic with YOLOv8 inference. (f171246)
-- [~] Task: Update the UI to reflect any changes in detection confidence or labels.
+- [x] Task: Update the UI to reflect any changes in detection confidence or labels. (122cf5e)
 - [x] Task: Conductor - User Manual Verification 'Web Application Refactor' (Protocol in workflow.md) (c633f9a)
 
 ## Phase 4: Optimization and Finalization [checkpoint: 047c29b]
