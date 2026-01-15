@@ -12,7 +12,7 @@
     - [x] Implement: Update `process_msasl_yolo.py` or create `process_msasl_mass.py` to support sharding by class. (ab85c25)
 - [x] Task: Conductor - User Manual Verification 'Sharded Processing Implementation' (Protocol in workflow.md) (3340b40)
 
-## Phase 3: Mass Data Acquisition
+## Phase 3: Mass Data Acquisition [checkpoint: da0f8b8]
 - [x] Task: Execute the mass processing pipeline for the filtered 100 signs. (ab85c25)
 - [x] Task: Verify dataset completeness and integrity of sharded files. (3cef073)
 - [x] Task: Conductor - User Manual Verification 'Mass Data Acquisition' (Protocol in workflow.md) (29063a7)
