@@ -15,7 +15,7 @@
 - [x] Task: Update `public/models/yolo_model/classes.json` with the full 100 signs. (2d51cce)
 - [x] Task: Conductor - User Manual Verification 'Model Export' (Protocol in workflow.md) (2d51cce)
 
-## Phase 4: Integration [x]
-- [x] Task: Integrate the new 100-class model into the web app. (f136ae7)
-- [x] Task: Final end-to-end verification of detection for multiple signs. (f136ae7)
-- [x] Task: Conductor - User Manual Verification 'Integration' (Protocol in workflow.md) (f136ae7)
+## Phase 4: Integration [checkpoint: 20a595d]
+- [x] Task: Integrate the new 100-class model into the web app. (20a595d)
+- [x] Task: Final end-to-end verification of detection for multiple signs. (20a595d)
+- [x] Task: Conductor - User Manual Verification 'Integration' (Protocol in workflow.md) (20a595d)
