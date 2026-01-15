@@ -6,8 +6,13 @@ def train_model(data_path, model_variant="yolo11n.pt", epochs=100, imgsz=640):
     """
     Trains a YOLO model on the specified dataset.
     """
-    # Load a pretrained model
-    model = YOLO(model_variant)
+    try:
+        # Load a pretrained model
+        model = YOLO(model_variant)
+    except Exception as e:
+        print(f"Error loading model variant '{model_variant}': {e}")
+        print("Please ensure you have the latest version of ultralytics installed or check if the model variant exists.")
+        sys.exit(1)
 
     # Train the model
     results = model.train(
@@ -24,7 +29,7 @@ def train_model(data_path, model_variant="yolo11n.pt", epochs=100, imgsz=640):
 
 if __name__ == "__main__":
     DATA_YAML = os.getenv("DATA_YAML", "dataset/data.yaml")
-    MODEL_VARIANT = os.getenv("MODEL_VARIANT", "yolo11n.pt") # Default to Nano for speed
+    MODEL_VARIANT = os.getenv("MODEL_VARIANT", "yolov26n.pt") # Targeting YOLOv26 architecture
     EPOCHS = int(os.getenv("EPOCHS", 50))
     IMGSZ = int(os.getenv("IMGSZ", 640))
 
