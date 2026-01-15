@@ -11,7 +11,7 @@
     - [x] Implement: Update `process_msasl.py` or create a new script for YOLOv8 data format. (89d1214)
 - [x] Task: Conductor - User Manual Verification 'Pipeline Integration' (Protocol in workflow.md) (80ce269)
 
-## Phase 3: Web Application Refactor
+## Phase 3: Web Application Refactor [checkpoint: 97df53e]
 - [x] Task: Integrate the new model into the `StaticModelRunner` and `DynamicModelRunner`. (f171246)
     - [x] Write Tests: Create tests for the new model loading logic. (9b621d9)
     - [x] Implement: Replace existing MediaPipe landmark-based logic with YOLOv8 inference. (f171246)
