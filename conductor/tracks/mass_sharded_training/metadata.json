@@ -1,0 +1,7 @@
+{
+  "id": "mass_sharded_training",
+  "title": "Mass Sharded Training",
+  "description": "Consolidate 100-class sharded data, convert to YOLO format, and train a comprehensive ASL model.",
+  "status": "active",
+  "created_at": "2026-01-15T17:15:00Z"
+}
