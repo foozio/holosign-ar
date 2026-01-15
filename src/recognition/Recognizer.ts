@@ -3,14 +3,15 @@ import type { HandFeaturesData } from '../features/HandFeatures';
 import { StaticASLClassifier } from './asl/StaticASLClassifier';
 import { DynamicASLDetector } from './asl/DynamicASLDetector';
 import type { Landmark } from '@mediapipe/hands';
-// import { ModelLoader } from '../ml/ModelLoader';
+import { ModelLoader } from '../ml/ModelLoader';
 import { StaticModelRunner } from '../ml/StaticModelRunner';
 import { DynamicModelRunner } from '../ml/DynamicModelRunner';
+import { YOLORunner } from '../ml/YOLORunner';
 
 export interface RecognitionResult {
     label: string;
     confidence: number;
-    type: 'static' | 'dynamic';
+    type: 'static' | 'dynamic' | 'yolo';
     debugInfo?: string[];
 }
 
@@ -21,7 +22,9 @@ export class Recognizer {
     // ML systems
     private staticRunner: StaticModelRunner;
     private dynamicRunner: DynamicModelRunner;
+    private yoloRunner: YOLORunner;
     private useML = false;
+    private useYOLO = false;
 
     // State
     // private lastResult: RecognitionResult | null = null;
@@ -36,6 +39,7 @@ export class Recognizer {
         this.dynamicDetector = new DynamicASLDetector();
         this.staticRunner = new StaticModelRunner();
         this.dynamicRunner = new DynamicModelRunner();
+        this.yoloRunner = new YOLORunner();
 
         // Try load models (async)
         this.loadModels();
@@ -43,24 +47,48 @@ export class Recognizer {
 
     private async loadModels() {
         try {
-            // Placeholder paths - these files don't exist yet
-            // const staticModel = await ModelLoader.loadModel('/models/static_model/model.json');
+            // YOLOv8
+            try {
+                const yoloModel = await ModelLoader.loadGraphModel('/models/yolo_model/model.json');
+                const classesResponse = await fetch('/models/yolo_model/classes.json');
+                const classes = await classesResponse.json();
+                this.yoloRunner.setModel(yoloModel, classes);
+                this.useYOLO = true;
+                console.log('YOLOv8 Model loaded');
+            } catch (e) {
+                console.warn('Could not load YOLOv8 model', e);
+            }
+
+            // Legacy ML
+            // const staticModel = await ModelLoader.loadLayersModel('/models/static_model/model.json');
             // this.staticRunner.setModel(staticModel);
 
-            // const dynamicModel = await ModelLoader.loadModel('/models/dynamic_model/model.json');
+            // const dynamicModel = await ModelLoader.loadLayersModel('/models/dynamic_model/model.json');
             // this.dynamicRunner.setModel(dynamicModel);
 
-            // console.log('ML Models loaded');
+            // console.log('Legacy ML Models loaded');
             // this.useML = true; // Enable ML when loaded
         } catch (e) {
             console.warn('Could not load ML models, falling back to rules', e);
         }
     }
 
-    process(timestamp: number, landmarks: Landmark[]): RecognitionResult | null {
+    async process(timestamp: number, landmarks: Landmark[], source?: HTMLVideoElement | HTMLCanvasElement): Promise<RecognitionResult | null> {
         this.frameCount++;
 
-        // Motion Gating
+        // 1. YOLO Inference (Highest Priority)
+        if (this.useYOLO && source) {
+            const yoloRes = await this.yoloRunner.predict(source as any);
+            if (yoloRes) {
+                return {
+                    label: yoloRes.label,
+                    confidence: yoloRes.confidence,
+                    type: 'yolo'
+                };
+            }
+        }
+
+        // 2. Motion Gating for landmark-based recognition
         if (this.isMoving(landmarks)) {
             this.staticHistory = []; // Reset history on fast motion
             this.lastLandmarks = landmarks;

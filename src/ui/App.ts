@@ -156,11 +156,13 @@ export class App {
                             this.debugPanel.innerHTML = `<h3>Low Confidence: ${(hand.score * 100).toFixed(0)}%</h3>`;
                         }
                     } else {
-                        const recognition = this.recognizer.process(result.timestamp, hand.landmarks);
-                        if (recognition) {
-                            this.updateCaption(recognition);
-                            if (this.debugMode) this.updateDebug(recognition);
-                        }
+                        // Use the video element as source for YOLO
+                        this.recognizer.process(result.timestamp, hand.landmarks, this.webcam.videoElement).then(recognition => {
+                            if (recognition && this.mode === 'interpret') {
+                                this.updateCaption(recognition);
+                                if (this.debugMode) this.updateDebug(recognition);
+                            }
+                        });
                     }
                 } else {
                     this.captionElement.innerText = "...";
