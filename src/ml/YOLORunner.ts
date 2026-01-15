@@ -21,7 +21,7 @@ export class YOLORunner {
     async predict(input: HTMLVideoElement | HTMLImageElement | tf.Tensor): Promise<{ label: string, confidence: number, box: number[] } | null> {
         if (!this.model) return null;
 
-        const [results, classId, score] = tf.tidy(() => {
+        const result = tf.tidy(() => {
             let imgTensor: tf.Tensor;
             if (input instanceof tf.Tensor) {
                 imgTensor = input;
@@ -34,15 +34,22 @@ export class YOLORunner {
             const normalized = resized.div(255.0).expandDims(0); // [1, 640, 640, 3]
 
             // Inference
-            // Note: YOLOv8 TFJS output is typically [1, num_classes + 4, 8400]
             const output = this.model!.predict(normalized) as tf.Tensor;
             
-            // Post-processing would go here (NMS, etc.)
-            // For now, let's assume a simplified output or use a helper library if needed
-            // Standard YOLOv8 post-processing in JS can be complex.
+            // Placeholder: Return the output shape or some dummy data for now
+            // To be replaced with actual NMS logic when model is fully exported
+            console.debug('YOLO Output Shape:', output.shape);
             
-            return [null, -1, 0]; // Placeholder for now
+            return { classId: -1, score: 0 };
         });
+
+        if (result.classId !== -1 && this.classNames.length > 0) {
+            return {
+                label: this.classNames[result.classId],
+                confidence: result.score,
+                box: [0, 0, 0, 0]
+            };
+        }
 
         return null;
     }
