@@ -34,7 +34,10 @@ __pycache__/
 # ML Data & Models
 msasl_processed_data.json
 ml_pipeline/hand_landmarker.task
-ml_pipeline/temp_videos/
+ml_pipeline/temp_videos*/
+ml_pipeline/sharded_data/
+sharded_data/
+top_100_signs.json
 dynamic_model/
 static_model/
 ml_pipeline/dynamic_model/
