@@ -5,7 +5,7 @@
 - [x] Task: Identify or prepare a suitable pre-trained YOLOv8 model for ASL. (7d5e2d4)
 - [x] Task: Conductor - User Manual Verification 'Research and Preparation' (Protocol in workflow.md) (b6e2360)
 
-## Phase 2: Pipeline Integration
+## Phase 2: Pipeline Integration [checkpoint: 9b621d9]
 - [x] Task: Update the ML pipeline to support YOLOv8 model training and evaluation. (89d1214)
     - [x] Write Tests: Create unit tests for YOLOv8 data loading. (849c132)
     - [x] Implement: Update `process_msasl.py` or create a new script for YOLOv8 data format. (89d1214)
