@@ -32,6 +32,7 @@ export class App {
     private debugPanel!: HTMLElement;
     private modeElement!: HTMLElement;
     private capturePanel!: HTMLElement;
+    private learnPanel!: HTMLElement;
 
     // State
     private mode: 'interpret' | 'learn' | 'capture' = 'interpret';
@@ -316,6 +317,10 @@ export class App {
         footer.appendChild(quickPanel);
         this.uiWrapper.appendChild(footer);
 
+        // --- Learn Panel ---
+        this.createLearnPanel();
+        footer.appendChild(this.learnPanel);
+
         // --- Capture Panel (Hidden by default, appended to footer when active) ---
         this.createCapturePanel();
         // Initially attached but hidden via CSS or state logic
@@ -329,6 +334,62 @@ export class App {
 
         // Initial State
         this.setMode('interpret');
+    }
+
+    private createLearnPanel() {
+        this.learnPanel = document.createElement('div');
+        this.learnPanel.className = 'panel learn-controls hidden';
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'capture-header';
+        header.innerHTML = '<h3>Learn Mode</h3>';
+        this.learnPanel.appendChild(header);
+
+        // Target Display
+        const targetContainer = document.createElement('div');
+        targetContainer.className = 'learn-target-container';
+        targetContainer.innerHTML = `
+            <div class="target-label">Practice: <span id="learn-target-val">A</span></div>
+        `;
+        this.learnPanel.appendChild(targetContainer);
+
+        // Guide Image (Reuse guide-container style)
+        const guideContainer = document.createElement('div');
+        guideContainer.className = 'guide-container';
+        const guideImg = document.createElement('img');
+        guideImg.id = 'learn-guide-image';
+        guideImg.className = 'guide-image';
+        guideImg.alt = 'Target Gesture';
+        guideContainer.appendChild(guideImg);
+        this.learnPanel.appendChild(guideContainer);
+
+        // Progress Bar (Visual feedback for hold time)
+        const progressContainer = document.createElement('div');
+        progressContainer.className = 'learn-progress-container';
+        progressContainer.innerHTML = `
+            <div class="learn-progress-track">
+                <div id="learn-progress-fill" class="learn-progress-fill"></div>
+            </div>
+            <div id="learn-status-msg" class="learn-status-msg">Hold the pose...</div>
+        `;
+        this.learnPanel.appendChild(progressContainer);
+
+        // Controls
+        const controls = document.createElement('div');
+        controls.className = 'capture-row';
+        controls.style.marginTop = '10px';
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'secondary-btn';
+        nextBtn.innerText = 'Skip / Next';
+        nextBtn.onclick = () => {
+            const next = this.learnController.nextSign();
+            this.updateLearnTarget(next);
+        };
+        controls.appendChild(nextBtn);
+
+        this.learnPanel.appendChild(controls);
     }
 
     private createCapturePanel() {
@@ -521,8 +582,25 @@ export class App {
             if (mode === 'capture') this.capturePanel.classList.remove('hidden');
             else this.capturePanel.classList.add('hidden');
         }
+        if (this.learnPanel) {
+            if (mode === 'learn') {
+                this.learnPanel.classList.remove('hidden');
+                this.updateLearnTarget(this.learnController.getTarget());
+            }
+            else this.learnPanel.classList.add('hidden');
+        }
         if (this.captionElement) {
             this.captionElement.style.display = (mode === 'interpret' || mode === 'learn') ? 'block' : 'none';
+        }
+    }
+
+    private updateLearnTarget(label: string) {
+        const targetEl = document.getElementById('learn-target-val');
+        if (targetEl) targetEl.innerText = label;
+
+        const guideImg = document.getElementById('learn-guide-image') as HTMLImageElement;
+        if (guideImg && ['A', 'B', 'C', 'D', 'E'].includes(label)) {
+            guideImg.src = `./assets/reference/${label}.png`;
         }
     }
 
@@ -534,11 +612,43 @@ export class App {
     }
 
     private updateLearnUI(state: LearnState) {
-        // Placeholder for Phase 2
-        this.captionElement.innerText = `Target: ${state.targetLabel}`;
+        this.captionElement.innerText = `Match: ${state.targetLabel}`;
+        
+        const fill = document.getElementById('learn-progress-fill');
+        const msg = document.getElementById('learn-status-msg');
+
+        if (fill) {
+            fill.style.width = `${state.matchProgress * 100}%`;
+            if (state.isMatched) {
+                fill.style.backgroundColor = 'var(--color-success)';
+                if (msg) {
+                    msg.innerText = "Perfect! Success!";
+                    msg.style.color = 'var(--color-success)';
+                }
+                
+                // Auto-advance after a short delay
+                setTimeout(() => {
+                    if (this.mode === 'learn' && state.isMatched) {
+                        const next = this.learnController.nextSign();
+                        this.updateLearnTarget(next);
+                    }
+                }, 1000);
+            } else {
+                fill.style.backgroundColor = 'var(--color-primary)';
+                if (msg) {
+                    if (state.matchProgress > 0) {
+                        msg.innerText = "Hold it...";
+                        msg.style.color = 'var(--color-primary)';
+                    } else {
+                        msg.innerText = "Match the sign to continue";
+                        msg.style.color = 'var(--color-text-muted)';
+                    }
+                }
+            }
+        }
+
         if (this.confidenceElement) {
-            this.confidenceElement.style.width = `${state.matchProgress * 100}%`;
-            this.confidenceElement.style.backgroundColor = state.isMatched ? 'var(--color-success)' : 'var(--color-primary)';
+            this.confidenceElement.style.width = '0%'; // Hide main confidence bar in learn mode
         }
     }
 

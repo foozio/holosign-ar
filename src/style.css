@@ -375,3 +375,54 @@ select {
   pointer-events: auto;
   z-index: 100;
 }
+
+/* Learn Mode specifics */
+.learn-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.learn-target-container {
+  text-align: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.target-label {
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+}
+
+#learn-target-val {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-left: 8px;
+}
+
+.learn-progress-container {
+  margin-top: var(--spacing-md);
+}
+
+.learn-progress-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+}
+
+.learn-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--color-primary);
+  transition: width 0.1s linear, background-color 0.3s;
+}
+
+.learn-status-msg {
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 8px;
+  color: var(--color-text-muted);
+}
