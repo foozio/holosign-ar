@@ -2,7 +2,7 @@
 
 ## Phase 1: Research and Preparation
 - [x] Task: Research YOLOv8 to TensorFlow.js conversion pathways. (bd8219a)
-- [ ] Task: Identify or prepare a suitable pre-trained YOLOv8 model for ASL.
+- [x] Task: Identify or prepare a suitable pre-trained YOLOv8 model for ASL. (7d5e2d4)
 - [ ] Task: Conductor - User Manual Verification 'Research and Preparation' (Protocol in workflow.md)
 
 ## Phase 2: Pipeline Integration
