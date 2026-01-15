@@ -17,7 +17,7 @@
 - [x] Task: Integrate visual feedback (e.g., success animations/colors) into the UI. (90f0166)
 - [x] Task: Conductor - User Manual Verification 'Logic and Feedback' (Protocol in workflow.md) (90f0166)
 
-## Phase 4: Finalization [x]
-- [x] Task: Implement sign progression (Next sign logic). (90f0166)
-- [x] Task: Final end-to-end testing with all available reference signs (A-E). (90f0166)
-- [x] Task: Conductor - User Manual Verification 'Finalization' (Protocol in workflow.md) (90f0166)
+## Phase 4: Finalization [checkpoint: b0ecc26]
+- [x] Task: Implement sign progression (Next sign logic). (b0ecc26)
+- [x] Task: Final end-to-end testing with all available reference signs (A-E). (b0ecc26)
+- [x] Task: Conductor - User Manual Verification 'Finalization' (Protocol in workflow.md) (b0ecc26)
