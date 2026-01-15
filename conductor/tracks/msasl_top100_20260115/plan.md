@@ -6,7 +6,7 @@
     - [x] Implement: Create a script `ml_pipeline/analyze_msasl.py` to output the target sign list. (7a97e84)
 - [x] Task: Conductor - User Manual Verification 'Analysis and Filtering' (Protocol in workflow.md) (046fe78)
 
-## Phase 2: Sharded Processing Implementation
+## Phase 2: Sharded Processing Implementation [checkpoint: 3cef073]
 - [x] Task: Implement sharded data extraction logic. (ab85c25)
     - [x] Write Tests: Create tests for the sharding directory structure and file writing. (cd5210c)
     - [x] Implement: Update `process_msasl_yolo.py` or create `process_msasl_mass.py` to support sharding by class. (ab85c25)
