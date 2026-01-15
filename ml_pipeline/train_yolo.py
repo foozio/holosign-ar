@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import os
 import sys
 
-def train_model(data_path, model_variant="yolo11n.pt", epochs=100, imgsz=640):
+def train_model(data_path, model_variant="yolov26n.pt", epochs=100, imgsz=640):
     """
     Trains a YOLO model on the specified dataset.
     """
