@@ -5,10 +5,10 @@
 - [x] Task: Create `LearnController.ts` to manage target signs and evaluation state. (2a084cc)
 - [x] Task: Conductor - User Manual Verification 'Architecture and State' (Protocol in workflow.md) (2a084cc)
 
-## Phase 2: User Interface [x]
-- [x] Task: Implement the Learn Mode UI panel in `App.ts`. (3dac9f2)
-- [x] Task: Add the reference image display logic for target signs. (3dac9f2)
-- [x] Task: Conductor - User Manual Verification 'User Interface' (Protocol in workflow.md) (3dac9f2)
+## Phase 2: User Interface [checkpoint: 5be812f]
+- [x] Task: Implement the Learn Mode UI panel in `App.ts`. (5be812f)
+- [x] Task: Add the reference image display logic for target signs. (5be812f)
+- [x] Task: Conductor - User Manual Verification 'User Interface' (Protocol in workflow.md) (5be812f)
 
 ## Phase 3: Logic and Feedback [ ]
 - [ ] Task: Implement the "Match" logic in `LearnController`.
