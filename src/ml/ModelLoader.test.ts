@@ -17,15 +17,25 @@ describe('ModelLoader', () => {
         const mockModel = { id: 'mock-layers-model' } as any;
         (tf.loadLayersModel as any).mockResolvedValue(mockModel);
 
-        const model = await ModelLoader.loadModel('path/to/model.json');
+        const model = await ModelLoader.loadLayersModel('path/to/model.json');
         
         expect(tf.loadLayersModel).toHaveBeenCalledWith('path/to/model.json');
+        expect(model).toBe(mockModel);
+    });
+
+    it('should load a GraphModel from a given path', async () => {
+        const mockModel = { id: 'mock-graph-model' } as any;
+        (tf.loadGraphModel as any).mockResolvedValue(mockModel);
+
+        const model = await ModelLoader.loadGraphModel('path/to/graph-model.json');
+        
+        expect(tf.loadGraphModel).toHaveBeenCalledWith('path/to/graph-model.json');
         expect(model).toBe(mockModel);
     });
 
     it('should throw an error if loading fails', async () => {
         (tf.loadLayersModel as any).mockRejectedValue(new Error('Load failed'));
 
-        await expect(ModelLoader.loadModel('invalid/path')).rejects.toThrow('Load failed');
+        await expect(ModelLoader.loadLayersModel('invalid/path')).rejects.toThrow('Load failed');
     });
 });
