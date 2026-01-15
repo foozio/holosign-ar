@@ -1,9 +1,9 @@
 # Implementation Plan: Learn Mode
 
-## Phase 1: Architecture and State [x]
-- [x] Task: Update `App.ts` and `App` class to support `learn` mode. (0bbe909)
-- [x] Task: Create `LearnController.ts` to manage target signs and evaluation state. (122cf5e)
-- [x] Task: Conductor - User Manual Verification 'Architecture and State' (Protocol in workflow.md) (417b2e9)
+## Phase 1: Architecture and State [checkpoint: 2a084cc]
+- [x] Task: Update `App.ts` and `App` class to support `learn` mode. (2a084cc)
+- [x] Task: Create `LearnController.ts` to manage target signs and evaluation state. (2a084cc)
+- [x] Task: Conductor - User Manual Verification 'Architecture and State' (Protocol in workflow.md) (2a084cc)
 
 ## Phase 2: User Interface [ ]
 - [ ] Task: Implement the Learn Mode UI panel in `App.ts`.
