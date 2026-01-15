@@ -8,7 +8,7 @@
 ## Machine Learning & Computer Vision
 - **MediaPipe Hands:** Google's high-fidelity hand and finger tracking solution, providing 21 3D landmarks.
 - **TensorFlow.js:** Library for machine learning in JavaScript, likely used for custom gesture classification layers beyond raw tracking.
-- **Ultralytics YOLO:** Used for training advanced gesture recognition models, exported to TF.js for browser inference.
+- **Ultralytics YOLO (v26 compatible):** Used for training state-of-the-art gesture recognition models, supporting the latest YOLOv26 architecture and exported to TF.js for high-performance browser inference.
 
 ## Utilities & Libraries
 - **@mediapipe/camera_utils:** Helper for managing the webcam feed.
