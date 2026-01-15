@@ -38,6 +38,29 @@ describe('LearnController', () => {
         expect(state.isMatched).toBe(false);
     });
 
+    it('should not progress if confidence is below threshold', () => {
+        controller.processDetection('A', 0.55); // Below 0.6
+        vi.advanceTimersByTime(750);
+        const state = controller.processDetection('A', 0.55);
+        expect(state.matchProgress).toBe(0);
+    });
+
+    it('should handle "NONE" label correctly', () => {
+        controller.processDetection('A', 0.9);
+        vi.advanceTimersByTime(750);
+        const state = controller.processDetection('NONE', 0);
+        expect(state.matchProgress).toBe(0);
+    });
+
+    it('should maintain progress if called multiple times with matching label', () => {
+        controller.processDetection('A', 0.9);
+        vi.advanceTimersByTime(500);
+        controller.processDetection('A', 0.9);
+        vi.advanceTimersByTime(500);
+        const state = controller.processDetection('A', 0.9);
+        expect(state.matchProgress).toBeCloseTo(1000 / 1500);
+    });
+
     it('should advance to next sign', () => {
         expect(controller.getTarget()).toBe('A');
         controller.nextSign();

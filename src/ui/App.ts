@@ -620,10 +620,12 @@ export class App {
         if (fill) {
             fill.style.width = `${state.matchProgress * 100}%`;
             if (state.isMatched) {
-                fill.style.backgroundColor = 'var(--color-success)';
+                fill.classList.add('success');
+                this.captionElement.classList.add('success-match');
                 if (msg) {
                     msg.innerText = "Perfect! Success!";
                     msg.style.color = 'var(--color-success)';
+                    msg.classList.add('success-pulse');
                 }
                 
                 // Auto-advance after a short delay
@@ -631,11 +633,20 @@ export class App {
                     if (this.mode === 'learn' && state.isMatched) {
                         const next = this.learnController.nextSign();
                         this.updateLearnTarget(next);
+                        // Reset classes
+                        fill.classList.remove('success');
+                        this.captionElement.classList.remove('success-match');
+                        if (msg) {
+                            msg.classList.remove('success-pulse');
+                        }
                     }
-                }, 1000);
+                }, 1500); // Increased to 1.5s to enjoy the success
             } else {
+                fill.classList.remove('success');
+                this.captionElement.classList.remove('success-match');
                 fill.style.backgroundColor = 'var(--color-primary)';
                 if (msg) {
+                    msg.classList.remove('success-pulse');
                     if (state.matchProgress > 0) {
                         msg.innerText = "Hold it...";
                         msg.style.color = 'var(--color-primary)';

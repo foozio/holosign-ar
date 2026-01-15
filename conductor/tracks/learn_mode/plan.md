@@ -10,12 +10,12 @@
 - [x] Task: Add the reference image display logic for target signs. (5be812f)
 - [x] Task: Conductor - User Manual Verification 'User Interface' (Protocol in workflow.md) (5be812f)
 
-## Phase 3: Logic and Feedback [ ]
-- [ ] Task: Implement the "Match" logic in `LearnController`.
-    - [ ] Write Tests: Create unit tests for matching detection results to targets.
-    - [ ] Implement: Add comparison logic with confidence thresholds.
-- [ ] Task: Integrate visual feedback (e.g., success animations/colors) into the UI.
-- [ ] Task: Conductor - User Manual Verification 'Logic and Feedback'
+## Phase 3: Logic and Feedback [x]
+- [x] Task: Implement the "Match" logic in `LearnController`. (5be812f)
+    - [x] Write Tests: Create unit tests for matching detection results to targets. (2a084cc)
+    - [x] Implement: Add comparison logic with confidence thresholds. (5be812f)
+- [x] Task: Integrate visual feedback (e.g., success animations/colors) into the UI. (5be812f)
+- [x] Task: Conductor - User Manual Verification 'Logic and Feedback' (Protocol in workflow.md) (5be812f)
 
 ## Phase 4: Finalization [ ]
 - [ ] Task: Implement sign progression (Next sign logic).
