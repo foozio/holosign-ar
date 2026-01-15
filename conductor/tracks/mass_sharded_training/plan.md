@@ -10,10 +10,10 @@
 - [x] Task: Verify the trained model performance and save `best.pt`. (dd24ded)
 - [x] Task: Conductor - User Manual Verification 'Mass Training' (Protocol in workflow.md) (dd24ded)
 
-## Phase 3: Model Export [ ]
-- [ ] Task: Export the trained model to TensorFlow.js format.
-- [ ] Task: Update `public/models/yolo_model/classes.json` with the full 100 signs.
-- [ ] Task: Conductor - User Manual Verification 'Model Export'
+## Phase 3: Model Export [x]
+- [x] Task: Export the trained model to TensorFlow.js format. (7190895)
+- [x] Task: Update `public/models/yolo_model/classes.json` with the full 100 signs. (7190895)
+- [x] Task: Conductor - User Manual Verification 'Model Export' (Protocol in workflow.md) (7190895)
 
 ## Phase 4: Integration [ ]
 - [ ] Task: Integrate the new 100-class model into the web app.
