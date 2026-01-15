@@ -159,7 +159,16 @@ export class App {
                         // Use the video element as source for YOLO
                         this.recognizer.process(result.timestamp, hand.landmarks, this.webcam.videoElement).then(recognition => {
                             if (recognition && this.mode === 'interpret') {
-                                this.updateCaption(recognition);
+                                // For YOLO results, we might want a slightly different threshold or feedback
+                                const confidenceThreshold = recognition.type === 'yolo' ? 0.5 : 0.6;
+                                
+                                if (recognition.confidence < confidenceThreshold) {
+                                    this.captionElement.innerText = "...";
+                                    this.confidenceElement.style.width = '0%';
+                                } else {
+                                    this.updateCaption(recognition);
+                                }
+                                
                                 if (this.debugMode) this.updateDebug(recognition);
                             }
                         });
@@ -509,6 +518,7 @@ export class App {
             <h3>Debug Info</h3>
             <p><strong>Label:</strong> ${result.label}</p>
             <p><strong>Confidence:</strong> ${result.confidence.toFixed(2)}</p>
+            <p><strong>Type:</strong> ${result.type.toUpperCase()}</p>
             <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 8px 0;">
             <pre>${JSON.stringify(result.debugInfo, null, 2)}</pre>
         `;

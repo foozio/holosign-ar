@@ -33,20 +33,57 @@ export class YOLORunner {
             const resized = tf.image.resizeBilinear(imgTensor as tf.Tensor3D, [640, 640]);
             const normalized = resized.div(255.0).expandDims(0); // [1, 640, 640, 3]
 
-            // Inference
+            // Inference: [1, 4 + num_classes, 8400]
             const output = this.model!.predict(normalized) as tf.Tensor;
             
-            // Placeholder: Return the output shape or some dummy data for now
-            // To be replaced with actual NMS logic when model is fully exported
-            console.debug('YOLO Output Shape:', output.shape);
+            // Transpose and squeeze: [8400, 4 + num_classes]
+            const predictions = output.transpose([0, 2, 1]).squeeze([0]);
             
-            return { classId: -1, score: 0 };
+            // Extract boxes and scores
+            // YOLOv8 format: [x_center, y_center, width, height, class0, class1, ...]
+            const [boxes, scores] = tf.tidy(() => {
+                const b = predictions.slice([0, 0], [-1, 4]);
+                const s = predictions.slice([0, 4], [-1, -1]).max(1);
+                return [b, s];
+            });
+
+            const classIndices = predictions.slice([0, 4], [-1, -1]).argMax(1);
+
+            return { boxes, scores, classIndices };
         });
 
-        if (result.classId !== -1 && this.classNames.length > 0) {
+        // Perform Non-Maximum Suppression
+        const nmsIndices = await tf.image.nonMaxSuppressionAsync(
+            result.boxes as tf.Tensor2D,
+            result.scores as tf.Tensor1D,
+            1, // maxOutputSize
+            0.5, // iouThreshold
+            0.5 // scoreThreshold
+        );
+
+        let finalResult: { classId: number, score: number } | null = null;
+        
+        if (nmsIndices.shape[0] > 0) {
+            const index = (await nmsIndices.data())[0];
+            const score = (await result.scores.data())[index];
+            const classId = (await result.classIndices.data())[index];
+            
+            finalResult = {
+                classId,
+                score
+            };
+        }
+
+        // Cleanup tensors
+        result.boxes.dispose();
+        result.scores.dispose();
+        result.classIndices.dispose();
+        nmsIndices.dispose();
+
+        if (finalResult && finalResult.classId !== -1 && this.classNames.length > 0) {
             return {
-                label: this.classNames[result.classId],
-                confidence: result.score,
+                label: this.classNames[finalResult.classId],
+                confidence: finalResult.score,
                 box: [0, 0, 0, 0]
             };
         }
