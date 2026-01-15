@@ -12,6 +12,7 @@
 
 ## ML Pipeline
 - **TensorFlow**: Core machine learning framework for model training.
+- **YOLOv8 (Ultralytics)**: For high-accuracy gesture detection and classification.
 - **OpenCV**: Library for video processing and frame extraction.
 - **yt-dlp**: For downloading and processing datasets from external sources.
 
