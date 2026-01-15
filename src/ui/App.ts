@@ -11,6 +11,8 @@ import { CaptureController } from '../capture/CaptureController';
 import type { CaptureConfig } from '../capture/CaptureController';
 import { Calibrator } from '../tracking/Calibration';
 import type { SampleType, Handedness } from '../capture/DatasetTypes';
+import { LearnController } from '../learn/LearnController';
+import type { LearnState } from '../learn/LearnController';
 
 export class App {
     private container: HTMLElement;
@@ -22,6 +24,7 @@ export class App {
     private recognizer: Recognizer;
     private overlay: ThreeOverlay;
     private calibrator: Calibrator;
+    private learnController: LearnController;
 
     // UI Elements
     private captionElement!: HTMLElement;
@@ -86,6 +89,7 @@ export class App {
         this.recognizer = new Recognizer();
         this.overlay = new ThreeOverlay(this.videoWrapper);
         this.calibrator = new Calibrator();
+        this.learnController = new LearnController();
 
         // Setup UI
         this.setupUI();
@@ -177,6 +181,22 @@ export class App {
                     this.captionElement.innerText = "...";
                     this.confidenceElement.style.width = '0%';
                 }
+            } else if (this.mode === 'learn') {
+                if (smoothedHands.length > 0) {
+                    const hand = smoothedHands[0];
+                    if (hand.score > 0.6) {
+                        this.recognizer.process(result.timestamp, hand.landmarks, this.webcam.videoElement).then(recognition => {
+                            if (recognition && this.mode === 'learn') {
+                                const learnState = this.learnController.processDetection(recognition.label, recognition.confidence);
+                                this.updateLearnUI(learnState);
+                                if (this.debugMode) this.updateDebug(recognition);
+                            }
+                        });
+                    }
+                } else {
+                    const learnState = this.learnController.processDetection('NONE', 0);
+                    this.updateLearnUI(learnState);
+                }
             } else if (this.mode === 'capture') {
                 // Capture logic
                 this.captureController.processFrame(smoothedResult);
@@ -196,7 +216,7 @@ export class App {
         // Mode Switcher
         this.modeElement = document.createElement('div');
         this.modeElement.className = 'mode-switch';
-        ['interpret', 'capture'].forEach(m => {
+        ['interpret', 'learn', 'capture'].forEach(m => {
             const btn = document.createElement('button');
             btn.className = `mode-btn ${this.mode === m ? 'active' : ''}`;
             btn.innerText = m.charAt(0).toUpperCase() + m.slice(1);
@@ -502,7 +522,7 @@ export class App {
             else this.capturePanel.classList.add('hidden');
         }
         if (this.captionElement) {
-            this.captionElement.style.display = mode === 'interpret' ? 'block' : 'none';
+            this.captionElement.style.display = (mode === 'interpret' || mode === 'learn') ? 'block' : 'none';
         }
     }
 
@@ -510,6 +530,15 @@ export class App {
         this.captionElement.innerText = result.label;
         if (this.confidenceElement) {
             this.confidenceElement.style.width = `${result.confidence * 100}%`;
+        }
+    }
+
+    private updateLearnUI(state: LearnState) {
+        // Placeholder for Phase 2
+        this.captionElement.innerText = `Target: ${state.targetLabel}`;
+        if (this.confidenceElement) {
+            this.confidenceElement.style.width = `${state.matchProgress * 100}%`;
+            this.confidenceElement.style.backgroundColor = state.isMatched ? 'var(--color-success)' : 'var(--color-primary)';
         }
     }
 
