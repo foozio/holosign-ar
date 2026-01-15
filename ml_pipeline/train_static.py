@@ -88,6 +88,10 @@ def main():
         
     model.save(f"{MODEL_SAVE_PATH}/model.h5")
     
+    # Save classes
+    with open(f"{MODEL_SAVE_PATH}/classes.json", 'w') as f:
+        json.dump(list(classes), f)
+    
     # Export to TFJS
     # Note: Requires tensorflowjs pip package
     # tensorflowjs_converter --input_format=keras static_model/model.h5 ../public/models/static_model

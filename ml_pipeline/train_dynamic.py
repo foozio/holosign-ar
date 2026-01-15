@@ -5,8 +5,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 import os
 
+import argparse
+
 # Configuration
-DATASET_PATH = '../capture_data.json'
+DEFAULT_DATASET_PATH = '../capture_data.json'
 MODEL_SAVE_PATH = 'dynamic_model'
 VECTOR_SIZE = 63
 WINDOW_SIZE = 30 # Must match runner
@@ -22,6 +24,7 @@ def pad_sequence(seq, max_len):
 
 def load_data(path):
     if not os.path.exists(path):
+        print(f"Dataset not found at {path}")
         return np.array([]), np.array([])
         
     with open(path, 'r') as f:
@@ -29,6 +32,8 @@ def load_data(path):
     
     X = []
     y = []
+    
+    print(f"Loading data from {path}...")
     
     for sample in data['samples']:
         if sample['type'] != 'dynamic':
@@ -71,8 +76,12 @@ def create_model(num_classes):
     return model
 
 def main():
+    parser = argparse.ArgumentParser(description='Train dynamic ASL model')
+    parser.add_argument('--data', type=str, default=DEFAULT_DATASET_PATH, help='Path to dataset JSON')
+    args = parser.parse_args()
+
     print("Loading dynamic data...")
-    X, y = load_data(DATASET_PATH)
+    X, y = load_data(args.data)
     
     if len(X) == 0:
         print("No dynamic data found.")
@@ -98,6 +107,11 @@ def main():
         os.makedirs(MODEL_SAVE_PATH)
         
     model.save(f"{MODEL_SAVE_PATH}/model.h5")
+
+    # Save classes
+    with open(f"{MODEL_SAVE_PATH}/classes.json", 'w') as f:
+        json.dump(list(classes), f)
+
     print("Export command: tensorflowjs_converter --input_format=keras dynamic_model/model.h5 ../public/models/dynamic_model")
 
 if __name__ == '__main__':

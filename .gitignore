@@ -24,3 +24,20 @@ dist-ssr
 *.sw?
 .nuzli
 !.nuzli/tasks.md
+
+# Python
+.venv*/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ML Data & Models
+msasl_processed_data.json
+ml_pipeline/hand_landmarker.task
+ml_pipeline/temp_videos/
+dynamic_model/
+static_model/
+ml_pipeline/dynamic_model/
+ml_pipeline/static_model/
+ml_pipeline/MS-ASL/MSASL_*.json
+!ml_pipeline/MS-ASL/README.md

@@ -1,28 +1,18 @@
-# GitHub Secrets & Environment Variables
+# GitHub Secrets & Configuration
 
-This document outlines the required secrets and environment variables for the Continuous Integration/Continuous Deployment (CI/CD) of HoloSign AR.
+## 1. Environment Variables
+Currently, the project does not rely on sensitive environment variables for local development. However, for a production pipeline, the following might be required:
 
-> **Note:** As of the current version, the application is client-side only and does not require runtime secrets for the core application logic.
-
-## 1. CI/CD Pipeline (GitHub Actions)
-
-If a workflow is set up for automated testing or deployment (e.g., to GitHub Pages or Vercel), the following secrets may be required:
-
-| Secret Name | Description | Required For |
+| Secret Name | Description | Required By |
 | :--- | :--- | :--- |
-| `DEPLOY_TOKEN` | Authentication token for the hosting provider (e.g., Vercel, Netlify). | Production Deployment |
-| `NPM_TOKEN` | If publishing internal packages or using private registries. | Build Process |
+| `NPM_TOKEN` | (Optional) If publishing packages to a private registry. | CI/CD |
+| `DEPLOY_KEY` | SSH Key or Token for deploying to hosting (e.g., GitHub Pages, Vercel). | CI/CD |
 
-## 2. Application Configuraton (`.env`)
+## 2. Client-Side Secrets
+**Warning:** Since this is a client-side application, **NO SECRETS** (API Keys, Private Keys) should be bundled in the `src` code.
+*   MediaPipe models are loaded from CDN (jsdelivr), requiring no authentication.
+*   TensorFlow.js models are served statically.
 
-The application uses Vite for build configuration. While currently empty of secrets, strict separation of config is recommended.
-
-| Variable | Description | Default |
-| :--- | :--- | :--- |
-| `VITE_APP_VERSION` | Application version string. | `0.0.0` |
-| `VITE_ENABLE_DEBUG` | Enable debug overlays by default. | `false` |
-
-## 3. Best Practices
-*   **Never commit `.env` files** containing real keys.
-*   Use `VITE_` prefix only for variables that must be exposed to the client-side bundle.
-*   Rotate deployment tokens periodically.
+## 3. Recommendations
+*   Ensure `.gitignore` includes `capture_data.json` if it contains personal training data not meant for public repo.
+*   Ensure `ml_pipeline/static_model/` (binary model files) is tracked or ignored based on size policies (Git LFS might be needed if models grow large).

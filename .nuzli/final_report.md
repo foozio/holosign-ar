@@ -1,40 +1,29 @@
-# Final Project Report
-## Project: HoloSign AR
+# Final Report: Codebase Analysis
 
-### 1. Executive Summary
-The HoloSign AR project has successfully established a robust foundation for a web-based ASL interpreter. The system integrates advanced computer vision (MediaPipe), 3D visualization (Three.js), and a flexible Machine Learning pipeline (TensorFlow.js) to detect, visualize, and recognize hand gestures in real-time. A newly implemented "Data Capture Mode" allows for the rapid creation of custom datasets, enabling the system to learn and adapt to new gestures.
+## 1. Architecture Overview
+HoloSign AR is a well-structured client-side TypeScript application. It separates concerns effectively:
+*   `src/ui`: Handles DOM and user interaction.
+*   `src/tracking`: Wraps MediaPipe for input processing.
+*   `src/recognition`: Orchestrates the core logic (Rule-based + ML).
+*   `src/ml`: Handles TensorFlow.js model execution.
+*   `ml_pipeline`: Python scripts for offline model training.
 
-### 2. Implemented Modules
+## 2. Key Findings
+*   **Hybrid Recognition:** The dual approach (heuristic rules + ML) is a robust strategy. Rules provide immediate baseline functionality, while ML allows for scaling to complex gestures.
+*   **Modular Design:** Replacing MediaPipe with another tracker or switching the rendering engine would be straightforward due to clear interfaces.
+*   **State Management:** `App.ts` is becoming a "God Class", managing UI, state, loop, and module coordination. Refactoring UI into components would improve maintainability.
+*   **Missing Models:** The code references model paths (`/models/...`) that do not exist yet. The application relies entirely on the `StaticASLClassifier` (rules) currently.
 
-#### 2.1 Core Tracking & Rendering
-*   **Webcam Module:** Robust camera management with permission handling.
-*   **MediaPipe Integration:** High-fidelity hand tracking with 21 landmarks.
-*   **ThreeOverlay:** Real-time 3D skeleton visualization mapped to video coordinates.
-*   **Smoothing:** OneEuroFilter implementation for jitter reduction.
+## 3. Bugs & Inefficiencies
+*   **Memory Usage:** Creating new objects/arrays in the render loop (e.g., `smoothedHands.map`) can cause GC pressure. Object pooling could be beneficial.
+*   **Error Handling:** `MediaPipeHands` fails silently in some cases. Better error reporting to the UI is needed.
+*   **Hardcoded Rules:** The `StaticASLClassifier` contains many magic numbers. These should be moved to a configuration or constants file.
 
-#### 2.2 Recognition Engine
-*   **Hybrid Architecture:** Seamlessly switches between heuristic (rule-based) and ML-based classifiers.
-*   **Rule-Based:** Immediate support for A-E, 1-3, and basic dynamic waves ("HELLO").
-*   **ML Integration:** `StaticModelRunner` and `DynamicModelRunner` ready to execute TFJS models.
+## 4. Recommendations
+1.  **UI Framework:** Consider migrating to React, Vue, or Svelte for better UI state management.
+2.  **Model Pipeline:** Complete the pipeline to export the Python-trained model to the `public/models/` directory so the web app can load it.
+3.  **Testing:** Add unit tests for the Classifier logic to ensure changes don't break existing gesture recognition.
+4.  **Performance:** Implement a `requestVideoFrameCallback` based loop instead of `requestAnimationFrame` for better sync with camera feed.
 
-#### 2.3 Data Capture Infrastructure
-*   **Interactive UI:** User-friendly panel for labeling and recording samples.
-*   **Validation Logic:** Ensures high-quality data collection (handedness checks, confidence thresholds).
-*   **Dataset Management:** structured JSON export for offline training.
-
-#### 2.4 ML Training Pipeline
-*   **Python Pipeline:** Scripts to ingest JSON datasets, extract feature vectors, train models (MLP/LSTM), and export to browser-compatible format.
-*   **Feature Engineering:** `FeatureVector.ts` ensures consistent input formatting between training and inference.
-
-### 3. Codebase Analysis
-*   **Architecture:** Modular, service-oriented architecture. Clear separation of concerns between UI (`App.ts`), Logic (`CaptureController`, `Recognizer`), and Infrastructure (`Webcam`, `MediaPipeHands`).
-*   **Quality:** Strongly typed TypeScript with strict checks enabled.
-*   **Extensibility:** ML runners are designed to support plug-and-play model updates without code changes.
-
-### 4. Conclusion
-The project is in a high state of readiness. The core "Loop" of *Capture -> Train -> Recognize* is fully implemented. The immediate next phase involves using the Capture Mode to build a substantive dataset and training the initial production-grade models using the provided Python scripts.
-
-### 5. Resources
-*   **Source Code:** `/src`
-*   **ML Pipeline:** `/ml_pipeline`
-*   **Documentation:** `/.nuzli`
+## 5. Conclusion
+The project is in a functional prototype stage. The foundation is solid, but the transition from "hardcoded rules" to "trained ML model" needs to be finalized to unlock the full potential.

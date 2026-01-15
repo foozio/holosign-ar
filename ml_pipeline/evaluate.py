@@ -10,12 +10,21 @@ try:
 except ImportError:
     HAS_PLOT = False
 
+import argparse
+
 # Config
-DATASET_PATH = '../capture_data.json'
+DEFAULT_DATASET_PATH = '../capture_data.json'
 STATIC_MODEL_PATH = 'static_model/model.h5'
 DYNAMIC_MODEL_PATH = 'dynamic_model/model.h5'
 VECTOR_SIZE = 63
 WINDOW_SIZE = 30
+
+def pad_sequence(seq, max_len):
+    if len(seq) > max_len:
+        return seq[:max_len]
+    pad_len = max_len - len(seq)
+    padding = [seq[-1]] * pad_len if seq else [[0]*VECTOR_SIZE] * pad_len
+    return seq + padding
 
 def load_dataset(path):
     if not os.path.exists(path):
@@ -25,7 +34,7 @@ def load_dataset(path):
 
 def evaluate_static(data):
     if not os.path.exists(STATIC_MODEL_PATH):
-        print("Static model not found.")
+        print("Static model not found at", STATIC_MODEL_PATH)
         return
 
     print("\n--- Evaluating Static Model ---")
@@ -49,21 +58,14 @@ def evaluate_static(data):
                  y_true.append(sample['label'])
 
     if not X:
-        print("No static data.")
+        print("No static data samples found in dataset.")
         return
 
     X = np.array(X)
     y_pred_probs = model.predict(X)
     y_pred = np.argmax(y_pred_probs, axis=1)
     
-    # We need label mapping. Ideally saved with model.
-    # Assuming 'train_static.py' order if consistent or using 
-    # the labels found in dataset sorted alphabetically.
     unique_labels = sorted(list(set(y_true)))
-    # Note: This might mismatch if training set had different labels.
-    # In production, save classes.json alongside model.
-    
-    # Map text labels to ints
     label_to_int = {l: i for i, l in enumerate(unique_labels)}
     y_true_int = [label_to_int[l] for l in y_true]
     
@@ -81,7 +83,7 @@ def evaluate_static(data):
 
 def evaluate_dynamic(data):
     if not os.path.exists(DYNAMIC_MODEL_PATH):
-        print("Dynamic model not found.")
+        print("Dynamic model not found at", DYNAMIC_MODEL_PATH)
         return
 
     print("\n--- Evaluating Dynamic Model ---")
@@ -101,19 +103,15 @@ def evaluate_dynamic(data):
                 vector.extend([lm['x'], lm['y'], lm['z']])
             sequence.append(vector)
             
-        # Pad
-        if len(sequence) > WINDOW_SIZE:
-            sequence = sequence[:WINDOW_SIZE]
-        else:
-            pad = [[0]*VECTOR_SIZE] * (WINDOW_SIZE - len(sequence))
-            sequence = sequence + pad
+        # Pad using the same logic as training
+        padded_seq = pad_sequence(sequence, WINDOW_SIZE)
             
-        if len(sequence) == WINDOW_SIZE:
-            X.append(sequence)
+        if len(padded_seq) == WINDOW_SIZE:
+            X.append(padded_seq)
             y_true.append(sample['label'])
             
     if not X:
-        print("No dynamic data.")
+        print("No dynamic data samples found in dataset.")
         return
 
     X = np.array(X)
@@ -127,9 +125,13 @@ def evaluate_dynamic(data):
     print(classification_report(y_true_int, y_pred, target_names=unique_labels))
 
 def main():
-    data = load_dataset(DATASET_PATH)
+    parser = argparse.ArgumentParser(description='Evaluate ASL models')
+    parser.add_argument('--data', type=str, default=DEFAULT_DATASET_PATH, help='Path to dataset JSON')
+    args = parser.parse_args()
+
+    data = load_dataset(args.data)
     if not data:
-        print("Dataset not found.")
+        print(f"Dataset not found at {args.data}")
         return
         
     evaluate_static(data)

@@ -1,28 +1,19 @@
-# Project Tasks & Roadmap
+# Actionable Tasks
 
-## Phase 1: Foundation (Completed)
-- [x] **Project Setup**: Initialize Vite, TypeScript, and Git repository.
-- [x] **Camera Access**: Implement `Webcam` class.
-- [x] **Hand Tracking**: Integrate `MediaPipeHands`.
-- [x] **Visuals**: Create `ThreeOverlay` for 3D skeleton rendering.
-- [x] **Basic Recognition**: Implement heuristic classifiers for A-E, 1-3.
+## Refactoring
+- [ ] **Refactor `App.ts`:** Split UI creation logic into a separate `UIManager` class.
+- [ ] **Constants:** Move magic numbers from `StaticASLClassifier` to a `RecognitionConfig.ts` file.
+- [ ] **Types:** Ensure strict typing is consistent (remove `any` casts in `MediaPipeHands`).
 
-## Phase 2: Data & ML Infrastructure (Completed)
-- [x] **Data Capture UI**: Implement recording panel in `App.ts`.
-- [x] **Dataset Schema**: Define `DatasetTypes` and `DatasetStore`.
-- [x] **Controller Logic**: specific `CaptureController` for validation and session management.
-- [x] **Feature Vector**: Implement feature extraction consistent with training.
-- [x] **Inference Runners**: Build `StaticModelRunner` and `DynamicModelRunner` for TFJS.
-- [x] **Training Scripts**: Create Python pipeline (`train_static.py`, `train_dynamic.py`).
+## Features
+- [ ] **Model Loading:** Implement the actual file loading for TFJS models in `ModelLoader.ts` and ensure paths are correct.
+- [ ] **Visual Feedback:** Add a visual indicator when a gesture is recognized (e.g., flash the text or play a sound).
+- [ ] **Dynamic Mode:** Implement the logic for `DynamicASLDetector` (currently a placeholder).
 
-## Phase 3: Dataset Collection (Current)
-- [ ] **Data Collection**: Record ~100 samples per gesture using Capture Mode.
-- [ ] **Validation**: Verify JSON structure and data quality.
-- [ ] **Training**: Run Python scripts to generate `model.json` artifacts.
-- [ ] **Deployment**: Place models in `public/models` and enable ML flag in `Recognizer`.
+## Pipeline / ML
+- [ ] **Export Script:** Create a script to run `tensorflowjs_converter` automatically after training.
+- [ ] **Data Validation:** Add a script to validate captured JSON data before training.
 
-## Phase 4: Refinement & Expansion (Future)
-- [ ] **Mobile Optimization**: Optimize Three.js renderer for mobile browsers.
-- [ ] **UI Polish**: Add onboarding guide and better feedback animations.
-- [ ] **Two-Hand Support**: Update Capture/Recognition logic for simultaneous two-hand signs.
-- [ ] **Cloud Storage**: Integrate S3/Supabase for cloud-based dataset storage (optional).
+## Documentation & Testing
+- [ ] **Unit Tests:** Write Jest tests for `StaticASLClassifier`.
+- [ ] **Readme:** Update README with instructions on how to capture data and train the model.

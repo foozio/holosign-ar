@@ -1,62 +1,96 @@
-# Entity Relationship Diagram (ERD)
-## Context: Data Capture JSON Schema
+# Entity Relationship Diagram (Data Models)
 
-The application uses a document-based structure for its dataset (JSON). Below is the schema definition representing the relationships between the captured data entities.
+Since HoloSign AR is primarily a client-side application with local storage for datasets, this ERD represents the Class structure and the JSON Data Schema.
+
+## 1. Class Relationships
 
 ```mermaid
-erDiagram
-    DATASET ||--|{ SAMPLE : contains
-    DATASET {
-        string version
-        object metadata
-        string created
+classDiagram
+    class App {
+        -Webcam webcam
+        -MediaPipeHands hands
+        -Recognizer recognizer
+        -ThreeOverlay overlay
+        -DatasetStore datasetStore
+        +loop()
     }
 
-    SAMPLE ||--|{ FRAME : consists_of
-    SAMPLE {
-        string id PK
-        string label
-        string type "static | dynamic"
-        string handedness "Left | Right"
-        number timestamp
-        object summary
+    class MediaPipeHands {
+        +start()
+        +setCallback()
     }
 
-    FRAME ||--|| FRAME_FEATURES : has
-    FRAME {
-        number timestamp
-        number timestampOffset
-        object rawLandmarks
+    class Recognizer {
+        -StaticASLClassifier staticRules
+        -StaticModelRunner staticML
+        +process(landmarks)
     }
 
-    FRAME_FEATURES {
-        object[] norm "Normalized Landmarks (21x3)"
-        object fingerState "Curl/Extension status"
-        number handScale
-        object palmNormal
+    class StaticASLClassifier {
+        +classify(features)
     }
+
+    class StaticModelRunner {
+        -tf.LayersModel model
+        +predict(features)
+    }
+
+    class DatasetStore {
+        -Sample[] samples
+        +addSample()
+        +download()
+    }
+
+    App *-- MediaPipeHands
+    App *-- Recognizer
+    App *-- DatasetStore
+    Recognizer *-- StaticASLClassifier
+    Recognizer *-- StaticModelRunner
 ```
 
-### Entity Definitions
+## 2. Dataset JSON Schema (`capture_data.json`)
 
-#### 1. Dataset
-The root object containing the entire collection of recorded sessions.
-*   `version`: Schema version (e.g., "1.0.0").
-*   `metadata`: Information about the capture session (e.g., device info, user ID).
+The application stores captured training data in a JSON structure.
 
-#### 2. Sample
-Represents a single recorded instance of a gesture (e.g., "One recording of the letter 'A'").
-*   `id`: Unique UUID.
-*   `label`: The ground truth label (e.g., "A", "HELLO").
-*   `type`: Classification type (`static` or `dynamic`).
-*   `handedness`: The hand used (`Left` or `Right`).
+```json
+{
+  "version": "1.0",
+  "samples": [
+    {
+      "id": "UUID_STRING",
+      "timestamp": 1678900000000,
+      "label": "A",
+      "type": "static",
+      "handedness": "Right",
+      "frames": [
+        {
+          "timestamp": 123.45,
+          "features": {
+            "norm": [
+              { "x": 0.5, "y": 0.5, "z": 0.0 },
+              // ... 21 landmarks
+            ],
+            "world": [
+              // ... 21 landmarks
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+```
 
-#### 3. Frame
-A single snapshot of time within a sample.
-*   `rawLandmarks`: Direct output from MediaPipe (x, y, z in screen/world coords).
-*   `timestamp`: System high-resolution timestamp.
+## 3. Core Data Structures
 
-#### 4. FrameFeatures
-Derived data used for ML training.
-*   `norm`: Pre-processed landmarks (centered, scaled, rotation-invariant).
-*   `fingerState`: Semantic description of fingers (Curled/Extended).
+### HandResult
+*   **landmarks:** Array<Landmark> (x, y, z)
+*   **worldLandmarks:** Array<Landmark>
+*   **handedness:** 'Left' | 'Right'
+*   **score:** number
+
+### RecognitionResult
+*   **label:** string
+*   **confidence:** number
+*   **type:** 'static' | 'dynamic'
+*   **debugInfo:** string[]
