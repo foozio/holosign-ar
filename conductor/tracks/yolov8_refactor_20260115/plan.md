@@ -9,7 +9,7 @@
 - [x] Task: Update the ML pipeline to support YOLOv8 model training and evaluation. (89d1214)
     - [x] Write Tests: Create unit tests for YOLOv8 data loading. (849c132)
     - [x] Implement: Update `process_msasl.py` or create a new script for YOLOv8 data format. (89d1214)
-- [ ] Task: Conductor - User Manual Verification 'Pipeline Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Pipeline Integration' (Protocol in workflow.md) (80ce269)
 
 ## Phase 3: Web Application Refactor
 - [ ] Task: Integrate the new model into the `StaticModelRunner` and `DynamicModelRunner`.
