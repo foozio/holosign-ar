@@ -1,6 +1,6 @@
 # Implementation Plan: MS-ASL Top 100 Integration
 
-## Phase 1: Analysis and Filtering
+## Phase 1: Analysis and Filtering [checkpoint: 5af2660]
 - [x] Task: Identify and filter the top 100 most frequent MS-ASL signs. (7a97e84)
     - [x] Write Tests: Create unit tests for frequency counting and filtering logic. (19538cc)
     - [x] Implement: Create a script `ml_pipeline/analyze_msasl.py` to output the target sign list. (7a97e84)
