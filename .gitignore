@@ -44,3 +44,4 @@ ml_pipeline/dynamic_model/
 ml_pipeline/static_model/
 ml_pipeline/MS-ASL/MSASL_*.json
 !ml_pipeline/MS-ASL/README.md
+ml_pipeline/yolo_dataset/
